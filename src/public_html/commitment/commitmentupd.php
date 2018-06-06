@@ -11,7 +11,7 @@
 
 	
 	$_SESSION[$_GET[cmt].$_SESSION[login]]=$cmta=array(
-	'id_cmt' 	=> $row[0], 'id_usl'		  => $row[1],    'ilosc'	=> $row[2]		
+	'id_cmt' 	=> $row[0], 'id_usl'		  => $row[1],    'ilosc'	=> $row[2],
 	'id_abon' => $row[3],	
 	'aktywne_od' => $row[4],  'aktywne_do' => $row[5]);
 	
