@@ -1,0 +1,4 @@
+<?php
+$voip_gates
+
+?>

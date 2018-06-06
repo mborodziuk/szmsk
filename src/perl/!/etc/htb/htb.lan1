@@ -1,0 +1,2849 @@
+#!/bin/bash
+source /etc/conf
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+tc qdisc del root dev imq0
+tc qdisc add dev imq0 root handle 1:0 htb default 2
+tc class add dev imq0 parent 1:0 classid 1:1 htb rate 100Mbit ceil 100Mbit
+
+#------------------------------- Ruch ze squida MISS -----------------------------------#
+tc class add dev imq0 parent 1:1 classid 1:2 htb rate 1024kbit ceil 2048kbit prio 4
+tc qdisc add dev imq0 parent 1:2 handle 12 sfq perturb 10
+$TFADPPI_IMQ sport 80 0xffff flowid 1:2
+
+
+tc qdisc del root dev $IF_LAN1
+tc qdisc add dev $IF_LAN1 root handle 2:0 htb default 9
+##########################################################################################
+##############################        Ruch z LAN       ###################################
+##########################################################################################
+tc class add dev $IF_LAN1 parent 2:0 classid 2:1 htb rate 100Mbit ceil 100Mbit
+
+#------------------------------ R u c h  z  s e r w e r a -------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:21 htb rate 60Mbit ceil 80Mbit prio 8
+tc qdisc add dev $IF_LAN1 parent 2:21 handle 221 sfq perturb 10
+
+$TFADPPI_LAN1 sport 80 0xffff flowid 2:21 # ruch ze squida HIT
+$TFADPPI_LAN1 src $N_LAN1 flowid 2:21
+$TFADPPI_LAN1 dst 80.53.51.248/29 flowid 2:21
+$TFADPPI_LAN1 src $N_LAN2 flowid 2:21
+$TFADPPI_LAN1 src $IP_INET1  flowid 2:21
+$TFADPPI_LAN1 src $IP_INET2  flowid 2:21
+$TFADPPI_LAN1 dst $IP_INET2  flowid 2:21
+$TFADPPI_LAN1 src $IP_INET3  flowid 2:21
+$TFADPPI_LAN1 dst $IP_INET3  flowid 2:21
+$TFADPPI_LAN1 protocol 0x6 0xff match ip tos 0x10 0xff flowid 2:21
+tc filter add dev $IF_LAN1 protocol ip preference 1 parent 2:0 u32 match ip \
+src $IP_INET2 match ip sport 80 0xffff match ip tos 0x00 0xff flowid 2:21
+tc filter add dev $IF_LAN1 parent 2:0 protocol ip prio 99 handle 4 fw flowid 2:21
+
+#-------------------------------------------------------------------------------------------
+
+#---- e_w³odarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:3 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:3 classid 2:31 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:31 handle 231 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:31 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:31 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:3 classid 2:32 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:32 handle 232 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.1 0xffff flowid 2:31 
+
+#---- m_frelas ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:4 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:4 classid 2:41 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:41 handle 241 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:41 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:41 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:4 classid 2:42 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:42 handle 242 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.10 0xffff flowid 2:41 
+
+#----  ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:5 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:5 classid 2:51 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:51 handle 251 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:51 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:51 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:5 classid 2:52 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:52 handle 252 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.11 0xffff flowid 2:51 
+
+#---- m_ku³aga ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:6 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:6 classid 2:61 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:61 handle 261 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:61 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:61 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:6 classid 2:62 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:62 handle 262 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.12 0xffff flowid 2:61 
+
+#---- £_kozikowski ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:7 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:7 classid 2:71 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:71 handle 271 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:71 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:71 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:7 classid 2:72 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:72 handle 272 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.13 0xffff flowid 2:71 
+
+#---- d_wrona ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:8 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:8 classid 2:81 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:81 handle 281 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:81 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:81 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:8 classid 2:82 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:82 handle 282 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.14 0xffff flowid 2:81 
+
+#---- a_czech ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:9 htb rate 64Kbit ceil 128Kbit 
+
+tc class add dev $IF_LAN1 parent 2:9 classid 2:91 htb rate 64Kbit ceil 128Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:91 handle 291 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:91 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:91 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:9 classid 2:92 htb rate 64Kbit ceil 128Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:92 handle 292 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.15 0xffff flowid 2:91 
+
+#---- e_pabjan ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:10 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:10 classid 2:101 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:101 handle 2101 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:101 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:101 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:10 classid 2:102 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:102 handle 2102 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.16 0xffff flowid 2:101 
+
+#---- r_rotkegel ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:11 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:11 classid 2:111 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:111 handle 2111 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:111 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:111 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:11 classid 2:112 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:112 handle 2112 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.17 0xffff flowid 2:111 
+
+#---- j_dytko ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:12 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:12 classid 2:121 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:121 handle 2121 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:121 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:121 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:12 classid 2:122 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:122 handle 2122 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.18 0xffff flowid 2:121 
+
+#---- m_tomaszewski ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:13 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:13 classid 2:131 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:131 handle 2131 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:131 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:131 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:13 classid 2:132 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:132 handle 2132 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.19 0xffff flowid 2:131 
+
+#---- a_stefanowicz ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:14 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:14 classid 2:141 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:141 handle 2141 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:141 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:141 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:14 classid 2:142 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:142 handle 2142 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.2 0xffff flowid 2:141 
+
+#---- l_sipaj³o ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:15 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:15 classid 2:151 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:151 handle 2151 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:151 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:151 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:15 classid 2:152 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:152 handle 2152 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.20 0xffff flowid 2:151 
+
+#---- f_rudzki ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:16 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:16 classid 2:161 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:161 handle 2161 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:161 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:161 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:16 classid 2:162 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:162 handle 2162 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.21 0xffff flowid 2:161 
+
+#---- p_£ojek ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:17 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:17 classid 2:171 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:171 handle 2171 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:171 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:171 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:17 classid 2:172 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:172 handle 2172 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.22 0xffff flowid 2:171 
+
+#---- a_¦l±zak ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:18 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:18 classid 2:181 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:181 handle 2181 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:181 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:181 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:18 classid 2:182 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:182 handle 2182 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.23 0xffff flowid 2:181 
+
+#---- m_chrostek ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:19 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:19 classid 2:191 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:191 handle 2191 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:191 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:191 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:19 classid 2:192 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:192 handle 2192 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.24 0xffff flowid 2:191 
+
+#---- s_mzyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:20 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:20 classid 2:201 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:201 handle 2201 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:201 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:201 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:20 classid 2:202 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:202 handle 2202 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.25 0xffff flowid 2:201 
+
+#---- e_pluta ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:21 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:21 classid 2:211 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:211 handle 2211 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:211 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:211 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:21 classid 2:212 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:212 handle 2212 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.26 0xffff flowid 2:211 
+
+#---- j_lelonek ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:22 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:22 classid 2:221 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:221 handle 2221 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:221 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:221 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:22 classid 2:222 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:222 handle 2222 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.27 0xffff flowid 2:221 
+
+#---- j_pawêzowska ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:23 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:23 classid 2:231 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:231 handle 2231 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:231 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:231 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:23 classid 2:232 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:232 handle 2232 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.28 0xffff flowid 2:231 
+
+#---- d_dytko ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:24 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:24 classid 2:241 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:241 handle 2241 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:241 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:241 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:24 classid 2:242 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:242 handle 2242 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.3 0xffff flowid 2:241 
+
+#---- m_kikas ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:25 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:25 classid 2:251 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:251 handle 2251 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:251 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:251 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:25 classid 2:252 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:252 handle 2252 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.30 0xffff flowid 2:251 
+
+#---- k_wojciechowska ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:26 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:26 classid 2:261 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:261 handle 2261 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:261 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:261 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:26 classid 2:262 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:262 handle 2262 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.31 0xffff flowid 2:261 
+
+#---- k_wojciechowska ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:27 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:27 classid 2:271 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:271 handle 2271 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:271 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:271 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:27 classid 2:272 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:272 handle 2272 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.32 0xffff flowid 2:271 
+
+#---- r_czaja ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:28 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:28 classid 2:281 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:281 handle 2281 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:281 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:281 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:28 classid 2:282 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:282 handle 2282 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.33 0xffff flowid 2:281 
+
+#---- p_dytko ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:29 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:29 classid 2:291 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:291 handle 2291 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:291 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:291 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:29 classid 2:292 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:292 handle 2292 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.4 0xffff flowid 2:291 
+
+#---- £_krakowiak ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:30 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:30 classid 2:301 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:301 handle 2301 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:301 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:301 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:30 classid 2:302 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:302 handle 2302 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.5 0xffff flowid 2:301 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:31 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:31 classid 2:311 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:311 handle 2311 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:311 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:311 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:31 classid 2:312 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:312 handle 2312 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.6 0xffff flowid 2:311 
+
+#---- l_siedlaczek ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:32 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:32 classid 2:321 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:321 handle 2321 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:321 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:321 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:32 classid 2:322 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:322 handle 2322 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.26.1 0xffff flowid 2:321 
+
+#---- w_pilarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:33 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:33 classid 2:331 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:331 handle 2331 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:331 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:331 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:33 classid 2:332 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:332 handle 2332 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.26.10 0xffff flowid 2:331 
+
+#---- r_waleczek ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:34 htb rate 64Kbit ceil 128Kbit 
+
+tc class add dev $IF_LAN1 parent 2:34 classid 2:341 htb rate 64Kbit ceil 128Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:341 handle 2341 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:341 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:341 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:34 classid 2:342 htb rate 64Kbit ceil 128Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:342 handle 2342 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.26.12 0xffff flowid 2:341 
+
+#---- m_andrzej ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:35 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:35 classid 2:351 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:351 handle 2351 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:351 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:351 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:35 classid 2:352 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:352 handle 2352 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.26.13 0xffff flowid 2:351 
+
+#---- d_pustolka ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:36 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:36 classid 2:361 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:361 handle 2361 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:361 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:361 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:36 classid 2:362 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:362 handle 2362 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.26.14 0xffff flowid 2:361 
+
+#---- r_wilczewski ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:37 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:37 classid 2:371 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:371 handle 2371 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:371 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:371 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:37 classid 2:372 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:372 handle 2372 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.26.15 0xffff flowid 2:371 
+
+#---- p_holik ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:38 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:38 classid 2:381 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:381 handle 2381 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:381 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:381 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:38 classid 2:382 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:382 handle 2382 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.26.16 0xffff flowid 2:381 
+
+#---- £_nied¼wied¼ ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:39 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:39 classid 2:391 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:391 handle 2391 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:391 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:391 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:39 classid 2:392 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:392 handle 2392 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.26.17 0xffff flowid 2:391 
+
+#---- m_burdach ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:40 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:40 classid 2:401 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:401 handle 2401 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:401 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:401 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:40 classid 2:402 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:402 handle 2402 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.26.2 0xffff flowid 2:401 
+
+#---- e_bucka ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:41 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:41 classid 2:411 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:411 handle 2411 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:411 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:411 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:41 classid 2:412 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:412 handle 2412 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.26.3 0xffff flowid 2:411 
+
+#---- a_lipiñska ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:42 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:42 classid 2:421 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:421 handle 2421 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:421 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:421 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:42 classid 2:422 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:422 handle 2422 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.26.4 0xffff flowid 2:421 
+
+#---- m_bielski ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:43 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:43 classid 2:431 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:431 handle 2431 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:431 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:431 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:43 classid 2:432 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:432 handle 2432 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.26.5 0xffff flowid 2:431 
+
+#---- r_grzegorczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:44 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:44 classid 2:441 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:441 handle 2441 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:441 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:441 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:44 classid 2:442 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:442 handle 2442 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.26.6 0xffff flowid 2:441 
+
+#---- m_k³os ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:45 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:45 classid 2:451 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:451 handle 2451 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:451 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:451 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:45 classid 2:452 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:452 handle 2452 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.26.7 0xffff flowid 2:451 
+
+#---- m_pomietlak ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:46 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:46 classid 2:461 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:461 handle 2461 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:461 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:461 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:46 classid 2:462 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:462 handle 2462 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.26.8 0xffff flowid 2:461 
+
+#---- s_adamska ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:47 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:47 classid 2:471 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:471 handle 2471 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:471 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:471 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:47 classid 2:472 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:472 handle 2472 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.26.9 0xffff flowid 2:471 
+
+#---- t_grodzki ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:48 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:48 classid 2:481 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:481 handle 2481 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:481 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:481 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:48 classid 2:482 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:482 handle 2482 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.7 0xffff flowid 2:481 
+
+#---- p_jaromin ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:49 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:49 classid 2:491 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:491 handle 2491 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:491 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:491 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:49 classid 2:492 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:492 handle 2492 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.2.8 0xffff flowid 2:491 
+
+#---- £_kurpanik ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:50 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:50 classid 2:501 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:501 handle 2501 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:501 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:501 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:50 classid 2:502 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:502 handle 2502 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.28.1 0xffff flowid 2:501 
+
+#---- j_flasza ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:51 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:51 classid 2:511 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:511 handle 2511 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:511 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:511 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:51 classid 2:512 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:512 handle 2512 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.28.10 0xffff flowid 2:511 
+
+#---- b_rohr ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:52 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:52 classid 2:521 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:521 handle 2521 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:521 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:521 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:52 classid 2:522 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:522 handle 2522 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.28.11 0xffff flowid 2:521 
+
+#---- £_kurpanik ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:53 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:53 classid 2:531 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:531 handle 2531 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:531 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:531 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:53 classid 2:532 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:532 handle 2532 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.28.2 0xffff flowid 2:531 
+
+#---- m_kryta ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:54 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:54 classid 2:541 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:541 handle 2541 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:541 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:541 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:54 classid 2:542 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:542 handle 2542 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.28.3 0xffff flowid 2:541 
+
+#---- j_bienek ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:55 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:55 classid 2:551 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:551 handle 2551 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:551 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:551 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:55 classid 2:552 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:552 handle 2552 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.28.4 0xffff flowid 2:551 
+
+#---- j_mierny ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:56 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:56 classid 2:561 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:561 handle 2561 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:561 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:561 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:56 classid 2:562 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:562 handle 2562 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.28.5 0xffff flowid 2:561 
+
+#---- g_nowak ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:57 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:57 classid 2:571 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:571 handle 2571 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:571 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:571 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:57 classid 2:572 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:572 handle 2572 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.28.6 0xffff flowid 2:571 
+
+#---- i_terka ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:58 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:58 classid 2:581 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:581 handle 2581 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:581 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:581 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:58 classid 2:582 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:582 handle 2582 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.28.7 0xffff flowid 2:581 
+
+#---- i_terka ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:59 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:59 classid 2:591 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:591 handle 2591 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:591 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:591 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:59 classid 2:592 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:592 handle 2592 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.28.8 0xffff flowid 2:591 
+
+#---- m_smuda ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:60 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:60 classid 2:601 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:601 handle 2601 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:601 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:601 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:60 classid 2:602 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:602 handle 2602 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.28.9 0xffff flowid 2:601 
+
+#---- m_borodziuk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:61 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:61 classid 2:611 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:611 handle 2611 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:611 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:611 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:61 classid 2:612 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:612 handle 2612 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.1 0xffff flowid 2:611 
+
+#---- g_pucha³a ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:62 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:62 classid 2:621 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:621 handle 2621 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:621 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:621 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:62 classid 2:622 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:622 handle 2622 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.10 0xffff flowid 2:621 
+
+#---- b_witczak ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:63 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:63 classid 2:631 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:631 handle 2631 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:631 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:631 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:63 classid 2:632 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:632 handle 2632 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.11 0xffff flowid 2:631 
+
+#---- e_czech ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:64 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:64 classid 2:641 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:641 handle 2641 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:641 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:641 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:64 classid 2:642 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:642 handle 2642 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.12 0xffff flowid 2:641 
+
+#---- m_hajduk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:65 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:65 classid 2:651 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:651 handle 2651 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:651 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:651 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:65 classid 2:652 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:652 handle 2652 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.13 0xffff flowid 2:651 
+
+#---- m_martowicz ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:66 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:66 classid 2:661 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:661 handle 2661 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:661 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:661 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:66 classid 2:662 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:662 handle 2662 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.14 0xffff flowid 2:661 
+
+#---- a_szyroki ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:67 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:67 classid 2:671 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:671 handle 2671 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:671 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:671 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:67 classid 2:672 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:672 handle 2672 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.15 0xffff flowid 2:671 
+
+#---- m_jarosz ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:68 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:68 classid 2:681 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:681 handle 2681 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:681 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:681 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:68 classid 2:682 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:682 handle 2682 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.16 0xffff flowid 2:681 
+
+#---- d_rusek ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:69 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:69 classid 2:691 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:691 handle 2691 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:691 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:691 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:69 classid 2:692 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:692 handle 2692 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.17 0xffff flowid 2:691 
+
+#---- d_kozio³ ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:70 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:70 classid 2:701 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:701 handle 2701 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:701 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:701 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:70 classid 2:702 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:702 handle 2702 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.18 0xffff flowid 2:701 
+
+#---- w_kusiak ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:71 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:71 classid 2:711 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:711 handle 2711 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:711 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:711 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:71 classid 2:712 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:712 handle 2712 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.19 0xffff flowid 2:711 
+
+#---- m_borodziuk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:72 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:72 classid 2:721 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:721 handle 2721 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:721 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:721 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:72 classid 2:722 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:722 handle 2722 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.2 0xffff flowid 2:721 
+
+#---- h_flasz ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:73 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:73 classid 2:731 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:731 handle 2731 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:731 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:731 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:73 classid 2:732 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:732 handle 2732 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.20 0xffff flowid 2:731 
+
+#---- d_s³owjew ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:74 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:74 classid 2:741 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:741 handle 2741 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:741 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:741 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:74 classid 2:742 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:742 handle 2742 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.21 0xffff flowid 2:741 
+
+#---- a_piecha ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:75 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:75 classid 2:751 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:751 handle 2751 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:751 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:751 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:75 classid 2:752 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:752 handle 2752 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.22 0xffff flowid 2:751 
+
+#---- h_flasz ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:76 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:76 classid 2:761 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:761 handle 2761 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:761 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:761 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:76 classid 2:762 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:762 handle 2762 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.23 0xffff flowid 2:761 
+
+#---- m_borodziuk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:77 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:77 classid 2:771 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:771 handle 2771 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:771 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:771 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:77 classid 2:772 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:772 handle 2772 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.3 0xffff flowid 2:771 
+
+#---- REMONT-BUD Ryszard Tabak ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:78 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:78 classid 2:781 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:781 handle 2781 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:781 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:781 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:78 classid 2:782 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:782 handle 2782 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.4 0xffff flowid 2:781 
+
+#---- k_banarska ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:79 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:79 classid 2:791 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:791 handle 2791 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:791 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:791 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:79 classid 2:792 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:792 handle 2792 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.5 0xffff flowid 2:791 
+
+#---- s_iwona ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:80 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:80 classid 2:801 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:801 handle 2801 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:801 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:801 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:80 classid 2:802 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:802 handle 2802 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.3.8 0xffff flowid 2:801 
+
+#---- m_w±sik ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:81 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:81 classid 2:811 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:811 handle 2811 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:811 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:811 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:81 classid 2:812 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:812 handle 2812 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.5.1 0xffff flowid 2:811 
+
+#---- a_szweda ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:82 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:82 classid 2:821 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:821 handle 2821 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:821 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:821 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:82 classid 2:822 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:822 handle 2822 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.5.10 0xffff flowid 2:821 
+
+#---- p_niedba³a ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:83 htb rate 64Kbit ceil 128Kbit 
+
+tc class add dev $IF_LAN1 parent 2:83 classid 2:831 htb rate 64Kbit ceil 128Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:831 handle 2831 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:831 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:831 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:83 classid 2:832 htb rate 64Kbit ceil 128Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:832 handle 2832 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.5.11 0xffff flowid 2:831 
+
+#---- g_nec ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:84 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:84 classid 2:841 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:841 handle 2841 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:841 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:841 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:84 classid 2:842 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:842 handle 2842 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.5.12 0xffff flowid 2:841 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:85 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:85 classid 2:851 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:851 handle 2851 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:851 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:851 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:85 classid 2:852 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:852 handle 2852 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.5.13 0xffff flowid 2:851 
+
+#---- r_probierz ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:86 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:86 classid 2:861 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:861 handle 2861 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:861 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:861 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:86 classid 2:862 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:862 handle 2862 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.5.14 0xffff flowid 2:861 
+
+#---- g_mucha ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:87 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:87 classid 2:871 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:871 handle 2871 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:871 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:871 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:87 classid 2:872 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:872 handle 2872 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.5.2 0xffff flowid 2:871 
+
+#---- m_kwa¶niak ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:88 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:88 classid 2:881 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:881 handle 2881 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:881 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:881 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:88 classid 2:882 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:882 handle 2882 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.5.3 0xffff flowid 2:881 
+
+#---- p_macek ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:89 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:89 classid 2:891 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:891 handle 2891 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:891 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:891 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:89 classid 2:892 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:892 handle 2892 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.5.4 0xffff flowid 2:891 
+
+#---- b_kempka ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:90 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:90 classid 2:901 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:901 handle 2901 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:901 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:901 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:90 classid 2:902 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:902 handle 2902 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.5.5 0xffff flowid 2:901 
+
+#---- m_rybicka ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:91 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:91 classid 2:911 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:911 handle 2911 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:911 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:911 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:91 classid 2:912 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:912 handle 2912 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.5.7 0xffff flowid 2:911 
+
+#---- k_duraj ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:92 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:92 classid 2:921 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:921 handle 2921 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:921 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:921 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:92 classid 2:922 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:922 handle 2922 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.5.8 0xffff flowid 2:921 
+
+#---- ¦_miros³awa ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:93 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:93 classid 2:931 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:931 handle 2931 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:931 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:931 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:93 classid 2:932 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:932 handle 2932 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.5.9 0xffff flowid 2:931 
+
+#---- t_dawidowicz ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:94 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:94 classid 2:941 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:941 handle 2941 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:941 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:941 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:94 classid 2:942 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:942 handle 2942 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.1 0xffff flowid 2:941 
+
+#---- j_lupa ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:95 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:95 classid 2:951 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:951 handle 2951 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:951 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:951 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:95 classid 2:952 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:952 handle 2952 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.10 0xffff flowid 2:951 
+
+#---- s_polok ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:96 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:96 classid 2:961 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:961 handle 2961 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:961 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:961 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:96 classid 2:962 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:962 handle 2962 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.11 0xffff flowid 2:961 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:97 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:97 classid 2:971 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:971 handle 2971 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:971 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:971 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:97 classid 2:972 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:972 handle 2972 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.12 0xffff flowid 2:971 
+
+#---- d_oleksiak ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:98 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:98 classid 2:981 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:981 handle 2981 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:981 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:981 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:98 classid 2:982 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:982 handle 2982 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.13 0xffff flowid 2:981 
+
+#---- j_sowa ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:99 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:99 classid 2:991 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:991 handle 2991 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:991 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:991 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:99 classid 2:992 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:992 handle 2992 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.14 0xffff flowid 2:991 
+
+#---- j_rubacha ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:100 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:100 classid 2:1001 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1001 handle 21001 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1001 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1001 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:100 classid 2:1002 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1002 handle 21002 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.15 0xffff flowid 2:1001 
+
+#---- w_piwowarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:101 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:101 classid 2:1011 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1011 handle 21011 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1011 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1011 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:101 classid 2:1012 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1012 handle 21012 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.16 0xffff flowid 2:1011 
+
+#---- k_zegar ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:102 htb rate 64Kbit ceil 128Kbit 
+
+tc class add dev $IF_LAN1 parent 2:102 classid 2:1021 htb rate 64Kbit ceil 128Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1021 handle 21021 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1021 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1021 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:102 classid 2:1022 htb rate 64Kbit ceil 128Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1022 handle 21022 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.17 0xffff flowid 2:1021 
+
+#---- c_szczygie³ ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:103 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:103 classid 2:1031 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1031 handle 21031 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1031 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1031 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:103 classid 2:1032 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1032 handle 21032 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.18 0xffff flowid 2:1031 
+
+#---- k_papuga ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:104 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:104 classid 2:1041 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1041 handle 21041 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1041 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1041 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:104 classid 2:1042 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1042 handle 21042 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.19 0xffff flowid 2:1041 
+
+#---- t_dawidowicz ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:105 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:105 classid 2:1051 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1051 handle 21051 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1051 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1051 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:105 classid 2:1052 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1052 handle 21052 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.2 0xffff flowid 2:1051 
+
+#---- e_mielczarek ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:106 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:106 classid 2:1061 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1061 handle 21061 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1061 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1061 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:106 classid 2:1062 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1062 handle 21062 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.20 0xffff flowid 2:1061 
+
+#---- d_bzik ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:107 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:107 classid 2:1071 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1071 handle 21071 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1071 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1071 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:107 classid 2:1072 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1072 handle 21072 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.21 0xffff flowid 2:1071 
+
+#---- j_walczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:108 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:108 classid 2:1081 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1081 handle 21081 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1081 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1081 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:108 classid 2:1082 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1082 handle 21082 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.22 0xffff flowid 2:1081 
+
+#---- n_el¿bieta ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:109 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:109 classid 2:1091 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1091 handle 21091 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1091 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1091 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:109 classid 2:1092 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1092 handle 21092 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.23 0xffff flowid 2:1091 
+
+#---- z_nowak ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:110 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:110 classid 2:1101 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1101 handle 21101 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1101 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1101 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:110 classid 2:1102 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1102 handle 21102 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.24 0xffff flowid 2:1101 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:111 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:111 classid 2:1111 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1111 handle 21111 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1111 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1111 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:111 classid 2:1112 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1112 handle 21112 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.25 0xffff flowid 2:1111 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:112 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:112 classid 2:1121 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1121 handle 21121 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1121 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1121 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:112 classid 2:1122 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1122 handle 21122 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.26 0xffff flowid 2:1121 
+
+#---- s_andrzej ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:113 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:113 classid 2:1131 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1131 handle 21131 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1131 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1131 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:113 classid 2:1132 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1132 handle 21132 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.27 0xffff flowid 2:1131 
+
+#---- m_warych ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:114 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:114 classid 2:1141 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1141 handle 21141 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1141 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1141 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:114 classid 2:1142 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1142 handle 21142 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.28 0xffff flowid 2:1141 
+
+#---- t_dawidowicz ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:115 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:115 classid 2:1151 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1151 handle 21151 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1151 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1151 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:115 classid 2:1152 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1152 handle 21152 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.3 0xffff flowid 2:1151 
+
+#---- EKO-DOM ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:116 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:116 classid 2:1161 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1161 handle 21161 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1161 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1161 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:116 classid 2:1162 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1162 handle 21162 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.4 0xffff flowid 2:1161 
+
+#---- g_pechta ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:117 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:117 classid 2:1171 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1171 handle 21171 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1171 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1171 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:117 classid 2:1172 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1172 handle 21172 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.5 0xffff flowid 2:1171 
+
+#---- w_wrona ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:118 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:118 classid 2:1181 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1181 handle 21181 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1181 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1181 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:118 classid 2:1182 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1182 handle 21182 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.6 0xffff flowid 2:1181 
+
+#---- p_radosz ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:119 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:119 classid 2:1191 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1191 handle 21191 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1191 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1191 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:119 classid 2:1192 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1192 handle 21192 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.7 0xffff flowid 2:1191 
+
+#---- a_golba ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:120 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:120 classid 2:1201 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1201 handle 21201 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1201 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1201 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:120 classid 2:1202 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1202 handle 21202 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.8 0xffff flowid 2:1201 
+
+#---- l_mularz ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:121 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN1 parent 2:121 classid 2:1211 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN1 parent 2:1211 handle 21211 sfq perturb 10 
+$TFADPPI_LAN1 protocol 1 0xff flowid 2:1211 
+$TFADPPI_LAN1 tos 0x10 0xff flowid 2:1211 
+$TFADPPI_LAN1 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN1 parent 2:121 classid 2:1212 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN1 parent 2:1212 handle 21212 sfq perturb 10 
+$TFADPPI_LAN1 dst 10.0.6.9 0xffff flowid 2:1211 
+
+#---- m_juszczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:122 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:122 classid 3:1221 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1221 handle 31221 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1221 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1221 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:122 classid 3:1222 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1222 handle 31222 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.10 0xffff flowid 3:1221 
+
+#---- a_matyjaszczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:123 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:123 classid 3:1231 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1231 handle 31231 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1231 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1231 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:123 classid 3:1232 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1232 handle 31232 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.11 0xffff flowid 3:1231 
+
+#---- a_wapiñska ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:124 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:124 classid 3:1241 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1241 handle 31241 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1241 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1241 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:124 classid 3:1242 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1242 handle 31242 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.12 0xffff flowid 3:1241 
+
+#---- j_ko³odziej ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:125 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:125 classid 3:1251 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1251 handle 31251 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1251 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1251 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:125 classid 3:1252 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1252 handle 31252 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.13 0xffff flowid 3:1251 
+
+#---- i_ko³odziejczuk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:126 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:126 classid 3:1261 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1261 handle 31261 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1261 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1261 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:126 classid 3:1262 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1262 handle 31262 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.14 0xffff flowid 3:1261 
+
+#---- £_ku¶ ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:127 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:127 classid 3:1271 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1271 handle 31271 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1271 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1271 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:127 classid 3:1272 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1272 handle 31272 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.15 0xffff flowid 3:1271 
+
+#---- z_piskorz ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:128 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:128 classid 3:1281 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1281 handle 31281 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1281 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1281 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:128 classid 3:1282 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1282 handle 31282 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.16 0xffff flowid 3:1281 
+
+#---- j_skrzypczak ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:129 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:129 classid 3:1291 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1291 handle 31291 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1291 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1291 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:129 classid 3:1292 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1292 handle 31292 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.17 0xffff flowid 3:1291 
+
+#---- k_fliska ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:130 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:130 classid 3:1301 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1301 handle 31301 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1301 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1301 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:130 classid 3:1302 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1302 handle 31302 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.18 0xffff flowid 3:1301 
+
+#---- b_masloch ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:131 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:131 classid 3:1311 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1311 handle 31311 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1311 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1311 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:131 classid 3:1312 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1312 handle 31312 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.19 0xffff flowid 3:1311 
+
+#---- t_nowak ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:132 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:132 classid 3:1321 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1321 handle 31321 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1321 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1321 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:132 classid 3:1322 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1322 handle 31322 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.2 0xffff flowid 3:1321 
+
+#---- a_tarnowski ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:133 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:133 classid 3:1331 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1331 handle 31331 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1331 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1331 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:133 classid 3:1332 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1332 handle 31332 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.20 0xffff flowid 3:1331 
+
+#---- p_kurzawa ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:134 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:134 classid 3:1341 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1341 handle 31341 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1341 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1341 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:134 classid 3:1342 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1342 handle 31342 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.21 0xffff flowid 3:1341 
+
+#---- d_wosab ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:135 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:135 classid 3:1351 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1351 handle 31351 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1351 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1351 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:135 classid 3:1352 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1352 handle 31352 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.22 0xffff flowid 3:1351 
+
+#---- r_krochmal ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:136 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:136 classid 3:1361 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1361 handle 31361 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1361 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1361 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:136 classid 3:1362 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1362 handle 31362 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.23 0xffff flowid 3:1361 
+
+#---- a_buras ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:137 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:137 classid 3:1371 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1371 handle 31371 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1371 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1371 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:137 classid 3:1372 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1372 handle 31372 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.24 0xffff flowid 3:1371 
+
+#---- k_gra¿yna ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:138 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:138 classid 3:1381 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1381 handle 31381 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1381 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1381 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:138 classid 3:1382 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1382 handle 31382 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.25 0xffff flowid 3:1381 
+
+#---- b_ostrouch ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:139 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:139 classid 3:1391 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1391 handle 31391 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1391 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1391 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:139 classid 3:1392 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1392 handle 31392 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.26 0xffff flowid 3:1391 
+
+#---- e_kochel ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:140 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:140 classid 3:1401 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1401 handle 31401 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1401 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1401 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:140 classid 3:1402 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1402 handle 31402 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.3 0xffff flowid 3:1401 
+
+#---- p_dziêbowski ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:141 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:141 classid 3:1411 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1411 handle 31411 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1411 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1411 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:141 classid 3:1412 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1412 handle 31412 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.4 0xffff flowid 3:1411 
+
+#---- j_zadora ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:142 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:142 classid 3:1421 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1421 handle 31421 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1421 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1421 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:142 classid 3:1422 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1422 handle 31422 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.5 0xffff flowid 3:1421 
+
+#---- BOMAR ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:143 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:143 classid 3:1431 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1431 handle 31431 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1431 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1431 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:143 classid 3:1432 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1432 handle 31432 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.6 0xffff flowid 3:1431 
+
+#---- w_gonera ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:144 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:144 classid 3:1441 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1441 handle 31441 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1441 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1441 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:144 classid 3:1442 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1442 handle 31442 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.7 0xffff flowid 3:1441 
+
+#---- m_chodorek ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:145 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:145 classid 3:1451 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1451 handle 31451 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1451 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1451 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:145 classid 3:1452 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1452 handle 31452 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.8 0xffff flowid 3:1451 
+
+#---- i_kupich ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:146 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:146 classid 3:1461 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1461 handle 31461 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1461 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1461 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:146 classid 3:1462 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1462 handle 31462 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.14.9 0xffff flowid 3:1461 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:147 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:147 classid 3:1471 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1471 handle 31471 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1471 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1471 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:147 classid 3:1472 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1472 handle 31472 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.16.1 0xffff flowid 3:1471 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:148 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:148 classid 3:1481 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1481 handle 31481 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1481 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1481 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:148 classid 3:1482 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1482 handle 31482 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.16.2 0xffff flowid 3:1481 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:149 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:149 classid 3:1491 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1491 handle 31491 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1491 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1491 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:149 classid 3:1492 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1492 handle 31492 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.17.1 0xffff flowid 3:1491 
+
+#---- a_sulik ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:150 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:150 classid 3:1501 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1501 handle 31501 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1501 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1501 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:150 classid 3:1502 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1502 handle 31502 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.17.2 0xffff flowid 3:1501 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:151 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:151 classid 3:1511 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1511 handle 31511 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1511 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1511 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:151 classid 3:1512 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1512 handle 31512 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.1 0xffff flowid 3:1511 
+
+#---- e_£uszcz ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:152 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:152 classid 3:1521 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1521 handle 31521 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1521 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1521 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:152 classid 3:1522 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1522 handle 31522 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.10 0xffff flowid 3:1521 
+
+#---- b_popiel ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:153 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:153 classid 3:1531 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1531 handle 31531 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1531 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1531 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:153 classid 3:1532 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1532 handle 31532 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.11 0xffff flowid 3:1531 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:154 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:154 classid 3:1541 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1541 handle 31541 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1541 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1541 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:154 classid 3:1542 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1542 handle 31542 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.13 0xffff flowid 3:1541 
+
+#---- a_bia³ek ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:155 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:155 classid 3:1551 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1551 handle 31551 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1551 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1551 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:155 classid 3:1552 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1552 handle 31552 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.14 0xffff flowid 3:1551 
+
+#---- r_noszczyñska ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:156 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:156 classid 3:1561 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1561 handle 31561 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1561 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1561 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:156 classid 3:1562 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1562 handle 31562 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.15 0xffff flowid 3:1561 
+
+#---- z_kumor ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:157 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:157 classid 3:1571 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1571 handle 31571 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1571 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1571 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:157 classid 3:1572 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1572 handle 31572 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.16 0xffff flowid 3:1571 
+
+#---- r_binert ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:158 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:158 classid 3:1581 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1581 handle 31581 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1581 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1581 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:158 classid 3:1582 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1582 handle 31582 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.17 0xffff flowid 3:1581 
+
+#---- a_ruciñska ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:159 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:159 classid 3:1591 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1591 handle 31591 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1591 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1591 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:159 classid 3:1592 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1592 handle 31592 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.18 0xffff flowid 3:1591 
+
+#---- w_górska ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:160 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:160 classid 3:1601 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1601 handle 31601 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1601 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1601 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:160 classid 3:1602 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1602 handle 31602 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.19 0xffff flowid 3:1601 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:161 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:161 classid 3:1611 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1611 handle 31611 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1611 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1611 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:161 classid 3:1612 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1612 handle 31612 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.2 0xffff flowid 3:1611 
+
+#---- b_pilecki ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:162 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:162 classid 3:1621 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1621 handle 31621 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1621 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1621 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:162 classid 3:1622 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1622 handle 31622 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.20 0xffff flowid 3:1621 
+
+#---- p_£abaj ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:163 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:163 classid 3:1631 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1631 handle 31631 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1631 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1631 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:163 classid 3:1632 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1632 handle 31632 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.21 0xffff flowid 3:1631 
+
+#---- j_ja¿wiec ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:164 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:164 classid 3:1641 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1641 handle 31641 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1641 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1641 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:164 classid 3:1642 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1642 handle 31642 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.22 0xffff flowid 3:1641 
+
+#---- j_ja¿wiec ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:165 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:165 classid 3:1651 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1651 handle 31651 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1651 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1651 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:165 classid 3:1652 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1652 handle 31652 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.23 0xffff flowid 3:1651 
+
+#---- j_makie³a ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:166 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:166 classid 3:1661 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1661 handle 31661 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1661 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1661 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:166 classid 3:1662 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1662 handle 31662 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.24 0xffff flowid 3:1661 
+
+#---- p_sendek ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:167 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:167 classid 3:1671 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1671 handle 31671 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1671 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1671 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:167 classid 3:1672 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1672 handle 31672 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.25 0xffff flowid 3:1671 
+
+#---- a_czubik ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:168 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:168 classid 3:1681 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1681 handle 31681 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1681 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1681 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:168 classid 3:1682 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1682 handle 31682 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.26 0xffff flowid 3:1681 
+
+#---- s_jadamus ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:169 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:169 classid 3:1691 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1691 handle 31691 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1691 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1691 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:169 classid 3:1692 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1692 handle 31692 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.27 0xffff flowid 3:1691 
+
+#---- g_maladyn ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:170 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:170 classid 3:1701 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1701 handle 31701 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1701 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1701 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:170 classid 3:1702 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1702 handle 31702 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.28 0xffff flowid 3:1701 
+
+#---- p_baran ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:171 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:171 classid 3:1711 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1711 handle 31711 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1711 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1711 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:171 classid 3:1712 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1712 handle 31712 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.29 0xffff flowid 3:1711 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:172 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:172 classid 3:1721 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1721 handle 31721 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1721 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1721 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:172 classid 3:1722 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1722 handle 31722 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.3 0xffff flowid 3:1721 
+
+#---- m_mosler ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:173 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:173 classid 3:1731 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1731 handle 31731 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1731 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1731 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:173 classid 3:1732 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1732 handle 31732 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.30 0xffff flowid 3:1731 
+
+#---- m_tadeusz ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:174 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:174 classid 3:1741 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1741 handle 31741 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1741 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1741 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:174 classid 3:1742 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1742 handle 31742 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.31 0xffff flowid 3:1741 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:175 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:175 classid 3:1751 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1751 handle 31751 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1751 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1751 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:175 classid 3:1752 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1752 handle 31752 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.4 0xffff flowid 3:1751 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:176 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:176 classid 3:1761 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1761 handle 31761 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1761 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1761 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:176 classid 3:1762 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1762 handle 31762 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.5 0xffff flowid 3:1761 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:177 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:177 classid 3:1771 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1771 handle 31771 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1771 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1771 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:177 classid 3:1772 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1772 handle 31772 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.6 0xffff flowid 3:1771 
+
+#---- j_szóstak ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:178 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:178 classid 3:1781 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1781 handle 31781 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1781 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1781 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:178 classid 3:1782 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1782 handle 31782 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.7 0xffff flowid 3:1781 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:179 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:179 classid 3:1791 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1791 handle 31791 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1791 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1791 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:179 classid 3:1792 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1792 handle 31792 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.27.1 0xffff flowid 3:1791 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:180 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:180 classid 3:1801 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1801 handle 31801 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1801 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1801 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:180 classid 3:1802 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1802 handle 31802 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.27.2 0xffff flowid 3:1801 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:181 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:181 classid 3:1811 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1811 handle 31811 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1811 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1811 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:181 classid 3:1812 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1812 handle 31812 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.27.3 0xffff flowid 3:1811 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:182 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:182 classid 3:1821 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1821 handle 31821 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1821 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1821 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:182 classid 3:1822 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1822 handle 31822 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.27.4 0xffff flowid 3:1821 
+
+#---- i_asenkowicz ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:183 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:183 classid 3:1831 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1831 handle 31831 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1831 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1831 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:183 classid 3:1832 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1832 handle 31832 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.27.5 0xffff flowid 3:1831 
+
+#---- b_kazimierz ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:184 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:184 classid 3:1841 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1841 handle 31841 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1841 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1841 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:184 classid 3:1842 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1842 handle 31842 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.2.9 0xffff flowid 3:1841 
+
+#---- u_barczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:185 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:185 classid 3:1851 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1851 handle 31851 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1851 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1851 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:185 classid 3:1852 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1852 handle 31852 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.4.1 0xffff flowid 3:1851 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:186 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:186 classid 3:1861 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1861 handle 31861 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1861 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1861 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:186 classid 3:1862 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1862 handle 31862 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.4.2 0xffff flowid 3:1861 
+
+#---- m_¯muda ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:187 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:187 classid 3:1871 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1871 handle 31871 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1871 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1871 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:187 classid 3:1872 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1872 handle 31872 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.4.3 0xffff flowid 3:1871 
+
+#---- r_mazurek ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:188 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:188 classid 3:1881 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1881 handle 31881 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1881 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1881 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:188 classid 3:1882 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1882 handle 31882 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.4.4 0xffff flowid 3:1881 
+
+#---- m_sandra ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:189 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:189 classid 3:1891 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1891 handle 31891 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1891 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1891 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:189 classid 3:1892 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1892 handle 31892 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.44.2 0xffff flowid 3:1891 
+
+#---- a_juszczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:190 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:190 classid 3:1901 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1901 handle 31901 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1901 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1901 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:190 classid 3:1902 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1902 handle 31902 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.4.5 0xffff flowid 3:1901 
+
+#---- b_kosien ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:191 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:191 classid 3:1911 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1911 handle 31911 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1911 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1911 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:191 classid 3:1912 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1912 handle 31912 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.4.6 0xffff flowid 3:1911 
+
+#---- s_siwiec ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:192 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:192 classid 3:1921 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1921 handle 31921 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1921 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1921 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:192 classid 3:1922 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1922 handle 31922 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.4.8 0xffff flowid 3:1921 
+
+#---- s_rudecki ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:193 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:193 classid 3:1931 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1931 handle 31931 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1931 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1931 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:193 classid 3:1932 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1932 handle 31932 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.4.9 0xffff flowid 3:1931 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:194 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:194 classid 3:1941 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1941 handle 31941 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1941 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1941 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:194 classid 3:1942 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1942 handle 31942 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.5.1 0xffff flowid 3:1941 
+
+#---- t_pi³at ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:195 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:195 classid 3:1951 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1951 handle 31951 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1951 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1951 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:195 classid 3:1952 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1952 handle 31952 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.5.2 0xffff flowid 3:1951 
+
+#---- z_kuchnecki ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:196 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:196 classid 3:1961 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1961 handle 31961 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1961 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1961 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:196 classid 3:1962 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1962 handle 31962 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.5.3 0xffff flowid 3:1961 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:197 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:197 classid 3:1971 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1971 handle 31971 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1971 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1971 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:197 classid 3:1972 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1972 handle 31972 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.6.1 0xffff flowid 3:1971 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:198 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:198 classid 3:1981 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1981 handle 31981 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1981 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1981 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:198 classid 3:1982 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1982 handle 31982 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.6.2 0xffff flowid 3:1981 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:199 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:199 classid 3:1991 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:1991 handle 31991 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:1991 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:1991 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:199 classid 3:1992 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:1992 handle 31992 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.6.3 0xffff flowid 3:1991 
+
+#---- m_róg ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:200 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:200 classid 3:2001 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2001 handle 32001 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2001 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2001 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:200 classid 3:2002 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2002 handle 32002 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.6.4 0xffff flowid 3:2001 
+
+#---- s_garstka ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:201 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:201 classid 3:2011 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2011 handle 32011 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2011 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2011 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:201 classid 3:2012 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2012 handle 32012 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.6.6 0xffff flowid 3:2011 
+
+#---- z_szczepanek ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:202 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:202 classid 3:2021 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2021 handle 32021 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2021 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2021 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:202 classid 3:2022 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2022 handle 32022 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.6.7 0xffff flowid 3:2021 
+
+#---- g_pieczonka ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:203 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:203 classid 3:2031 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2031 handle 32031 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2031 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2031 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:203 classid 3:2032 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2032 handle 32032 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.6.8 0xffff flowid 3:2031 
+
+#---- d_kania ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:204 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:204 classid 3:2041 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2041 handle 32041 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2041 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2041 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:204 classid 3:2042 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2042 handle 32042 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.6.9 0xffff flowid 3:2041 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:205 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:205 classid 3:2051 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2051 handle 32051 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2051 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2051 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:205 classid 3:2052 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2052 handle 32052 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.7.1 0xffff flowid 3:2051 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:206 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:206 classid 3:2061 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2061 handle 32061 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2061 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2061 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:206 classid 3:2062 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2062 handle 32062 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.7.2 0xffff flowid 3:2061 
+
+#---- a_bednarczyk ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:207 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:207 classid 3:2071 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2071 handle 32071 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2071 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2071 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:207 classid 3:2072 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2072 handle 32072 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.7.3 0xffff flowid 3:2071 
+
+#---- h_¯elazny ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:208 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:208 classid 3:2081 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2081 handle 32081 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2081 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2081 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:208 classid 3:2082 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2082 handle 32082 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.7.4 0xffff flowid 3:2081 
+
+#---- a_czyba ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:209 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:209 classid 3:2091 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2091 handle 32091 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2091 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2091 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:209 classid 3:2092 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2092 handle 32092 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.8.1 0xffff flowid 3:2091 
+
+#---- a_pêdziñska-kulik ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:210 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:210 classid 3:2101 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2101 handle 32101 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2101 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2101 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:210 classid 3:2102 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2102 handle 32102 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.8.2 0xffff flowid 3:2101 
+
+#---- s_opyrcha³ ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:211 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:211 classid 3:2111 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2111 handle 32111 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2111 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2111 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:211 classid 3:2112 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2112 handle 32112 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.8.3 0xffff flowid 3:2111 
+
+#---- b_gola ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:212 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:212 classid 3:2121 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2121 handle 32121 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2121 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2121 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:212 classid 3:2122 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2122 handle 32122 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.8.4 0xffff flowid 3:2121 
+
+#---- SELLASOFT Mariusz Ry³o ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:213 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:213 classid 3:2131 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2131 handle 32131 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2131 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2131 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:213 classid 3:2132 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2132 handle 32132 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.8.5 0xffff flowid 3:2131 
+
+#---- a_mocny ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:214 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:214 classid 3:2141 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2141 handle 32141 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2141 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2141 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:214 classid 3:2142 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2142 handle 32142 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.8.6 0xffff flowid 3:2141 
+
+#---- m_£ukowicz ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:215 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:215 classid 3:2151 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2151 handle 32151 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2151 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2151 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:215 classid 3:2152 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2152 handle 32152 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.8.7 0xffff flowid 3:2151 
+
+#---- e_snarska ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:216 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:216 classid 3:2161 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2161 handle 32161 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2161 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2161 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:216 classid 3:2162 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2162 handle 32162 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.8.8 0xffff flowid 3:2161 
+
+#---- m_lebuda ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:217 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent 3:217 classid 3:2171 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent 3:2171 handle 32171 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid 3:2171 
+$TFADPPI_LAN2 tos 0x10 0xff flowid 3:2171 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent 3:217 classid 3:2172 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent 3:2172 handle 32172 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.1.8.9 0xffff flowid 3:2171 
+
+#---- s_iwona ----------------------------------------------------------------------------------------------------------------------#
+tc class add dev $IF_LAN2 parent :1 classid :218 htb rate 128Kbit ceil 256Kbit 
+
+tc class add dev $IF_LAN2 parent :218 classid :2181 htb rate 128Kbit ceil 256Kbit prio 1 
+tc qdisc add dev $IF_LAN2 parent :2181 handle 2181 sfq perturb 10 
+$TFADPPI_LAN2 protocol 1 0xff flowid :2181 
+$TFADPPI_LAN2 tos 0x10 0xff flowid :2181 
+$TFADPPI_LAN2 protocol 6 0xff match u8 0x05 0x0f at 0 match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 flowid 2:31 
+
+tc class add dev $IF_LAN2 parent :218 classid :2182 htb rate 128Kbit ceil 256Kbit prio 2 
+tc qdisc add dev $IF_LAN2 parent :2182 handle 2182 sfq perturb 10 
+$TFADPPI_LAN2 dst 10.2.2.2 0xffff flowid :2181 
+

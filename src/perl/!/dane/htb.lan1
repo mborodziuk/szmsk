@@ -1,0 +1,41 @@
+#!/bin/bash
+source /etc/conf
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+tc qdisc del root dev imq0
+tc qdisc add dev imq0 root handle 1:0 htb default 2
+tc class add dev imq0 parent 1:0 classid 1:1 htb rate 100Mbit ceil 100Mbit
+
+#------------------------------- Ruch ze squida MISS -----------------------------------#
+tc class add dev imq0 parent 1:1 classid 1:2 htb rate 1024kbit ceil 2048kbit prio 4
+tc qdisc add dev imq0 parent 1:2 handle 12 sfq perturb 10
+$TFADPPI_IMQ sport 80 0xffff flowid 1:2
+
+
+tc qdisc del root dev $IF_LAN1
+tc qdisc add dev $IF_LAN1 root handle 2:0 htb default 9
+##########################################################################################
+##############################        Ruch z LAN       ###################################
+##########################################################################################
+tc class add dev $IF_LAN1 parent 2:0 classid 2:1 htb rate 100Mbit ceil 100Mbit
+
+#------------------------------ R u c h  z  s e r w e r a -------------------------------#
+tc class add dev $IF_LAN1 parent 2:1 classid 2:21 htb rate 60Mbit ceil 80Mbit prio 8
+tc qdisc add dev $IF_LAN1 parent 2:21 handle 221 sfq perturb 10
+
+$TFADPPI_LAN1 sport 80 0xffff flowid 2:21 # ruch ze squida HIT
+$TFADPPI_LAN1 src $N_LAN1 flowid 2:21
+$TFADPPI_LAN1 dst 80.53.51.248/29 flowid 2:21
+$TFADPPI_LAN1 src $N_LAN2 flowid 2:21
+$TFADPPI_LAN1 src $IP_INET1  flowid 2:21
+$TFADPPI_LAN1 src $IP_INET2  flowid 2:21
+$TFADPPI_LAN1 dst $IP_INET2  flowid 2:21
+$TFADPPI_LAN1 src $IP_INET3  flowid 2:21
+$TFADPPI_LAN1 dst $IP_INET3  flowid 2:21
+$TFADPPI_LAN1 protocol 0x6 0xff match ip tos 0x10 0xff flowid 2:21
+tc filter add dev $IF_LAN1 protocol ip preference 1 parent 2:0 u32 match ip \
+src $IP_INET2 match ip sport 80 0xffff match ip tos 0x00 0xff flowid 2:21
+tc filter add dev $IF_LAN1 parent 2:0 protocol ip prio 99 handle 4 fw flowid 2:21
+
+#-------------------------------------------------------------------------------------------
+

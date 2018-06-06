@@ -1,0 +1,30 @@
+#!/bin/bash
+source /etc/conf
+
+tc qdisc del root dev $IF_LAN2
+tc qdisc add dev $IF_LAN2 root handle 3:0 htb default 9
+##########################################################################################
+##############################        Ruch z LAN       ###################################
+##########################################################################################
+tc class add dev $IF_LAN2 parent 3:0 classid 3:1 htb rate 100Mbit ceil 100Mbit
+
+#------------------------------ R u c h  z  s e r w e r a -------------------------------#
+tc class add dev $IF_LAN2 parent 3:1 classid 3:21 htb rate 60Mbit ceil 80Mbit prio 8
+tc qdisc add dev $IF_LAN2 parent 3:21 handle 321 sfq perturb 10
+
+$TFADPPI_LAN2 sport 80 0xffff flowid 3:21 # ruch ze squida HIT
+$TFADPPI_LAN2 src $N_LAN1 flowid 3:21
+$TFADPPI_LAN2 dst 80.53.51.248/29 flowid 3:21
+$TFADPPI_LAN2 src $N_LAN2 flowid 3:21
+$TFADPPI_LAN2 src $IP_INET1  flowid 3:21
+$TFADPPI_LAN2 src $IP_INET2  flowid 3:21
+$TFADPPI_LAN2 dst $IP_INET2  flowid 3:21
+$TFADPPI_LAN2 src $IP_INET3  flowid 3:21
+$TFADPPI_LAN2 dst $IP_INET3  flowid 3:21
+$TFADPPI_LAN2 protocol 0x6 0xff match ip tos 0x10 0xff flowid 3:21
+tc filter add dev $IF_LAN2 protocol ip preference 1 parent 3:0 u32 match ip \
+src $IP_INET2 match ip sport 80 0xffff match ip tos 0x00 0xff flowid 3:21
+tc filter add dev $IF_LAN2 parent 3:0 protocol ip prio 99 handle 4 fw flowid 3:21
+
+#=------------------------------------------------------------------------------------------
+

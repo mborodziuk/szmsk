@@ -1,0 +1,194 @@
+
+
+div {
+    text-align:	center;
+  }
+   
+
+div.1 
+	{
+    text-align: 	center;
+		font-family: 	Tahoma, sans-serif;
+    font-size: 		12px;
+		font-weight:	bold;
+    }
+div.2 
+	{
+    text-align: 	center;
+		font-family: 	Tahoma, sans-serif;
+    font-size: 		10px;
+    }	
+		
+div.3
+	{
+    text-align: 	center;
+		font-family: 	Tahoma, sans-serif;
+    font-size: 		10px;
+		font-style: 	italic;
+		font-weight:	bold;
+	}	
+div.4
+	{
+    text-align: 	center;
+		font-family: 	Tahoma, sans-serif;
+    font-size: 		11px;
+		font-style: italic;
+		font-weight:	bold;
+	}	
+	
+div.5
+	{
+    text-align: 	left;
+		font-family: 	Tahoma, sans-serif;
+    font-size: 		9px;
+		font-style: italic;
+		font-weight:	normal;
+	}		
+
+
+BODY {
+    text-align: 	left;
+    font-family: 	Tahoma, sans-serif;
+    font-size: 		9px;
+    color: 		#003868;
+    background-color: 	#FFFFFF;
+    margin-left: 	10px;
+    vertical-align: 	middle;
+  }
+
+
+
+TABLE {
+	border: 	1px solid black;
+	border-collapse: collapse;
+	float: center;
+}
+
+
+TABLE.1 {
+    border : 0px solid white;
+		width:800px;  
+  }
+
+
+TABLE.2 {
+    font-weight:	bold;
+    font-size:		12px;
+    text-align: 	left;
+    float:		left;
+    border : 		1px solid white;
+    vertical-align:	top;
+}
+      
+TABLE.3 {
+    border : 2px solid #C1C2FF;
+}
+
+
+
+TD {
+    margin-left: 	10px;
+    text-align: 	center;
+		border:				1px solid black;
+		height:20px;
+		}
+
+
+TD.1 {
+		border:				1px solid black;
+		text-align:		right;
+    margin-right:	20px;
+    font-weight: 	normal;
+		font-style: italic;
+		height:				20px;
+  }
+
+
+	
+TD.2 {
+    border:				1px solid black;
+    text-align: 	left;
+    margin-left: 	20px;
+    font-weight: 	bold;
+				height:		20px;
+
+  }
+
+
+TD.3 {
+    margin-left: 	10px;
+    text-align: 	center;
+		    border : 0px solid white;
+  }
+
+
+
+											    
+
+
+
+
+TD.td4	{
+    text-align: left;
+    margin-left: 10px;
+  }
+
+
+TD.bd	{
+	text-align: center;
+	font-weight: bold;
+}
+
+
+TR.tr1 {
+    text-align: center;
+    color: white;
+    border: thin dotted #015AFF;
+    background: #C1C2FF;
+    font-size: 11px;
+    font-weight: bold;
+  }
+
+TR.tr2 {
+    text-align: left;
+    margin-left: 10px;
+    color: White;
+    border: thin dotted #E1E1E1;
+    background: #E1E1E1;
+    font-size: small;
+    font-weight: bold;
+  }
+
+TR.tr3 {
+    text-align: left;
+    margin-left: 10px;
+    border: 2px solid white;
+    background: white;
+    font-size: 11px;
+    height:	20px;
+      }
+
+TR.tr4 {
+    text-align: left;
+    margin-left: 10px;
+    border: 2px solid blue;
+    color: darkblue;
+    background: #C1C2FF;
+    font-size: 11px;
+ }
+			      			      
+
+SELECT {
+    border:	1px solid #00FFFF;
+    float:	left;
+    font-size: 	11px;
+    size:	1;
+  }
+
+
+SUBMIT {
+    text-align:	center;
+    float: 	center;
+    font-size:	11px;
+    }
+

@@ -1,0 +1,452 @@
+<?
+function MakeFV(&$pdf, $dbh, $dokks, $typ)
+{
+	include "config.php";
+	$pdf->AddPage();
+
+	$pdf->SetFont('Tahoma','B',17);
+	$pdf->SetXY(99, 10);
+	$pdf->Cell(97,7,'Faktura VAT',1,0,'C');
+
+	$pdf->SetMargins(15,15,15);
+	$pdf->SetFont('Tahoma','',10);
+	$pdf->SetXY(99, 18);
+	$pdf->Cell(48,7,"Nr: $dokks[nr_d]",1,0,'C');
+	$pdf->SetXY(148, 18);
+	$pdf->Cell(48,7,$typ,1,0,'C');
+	$pdf->SetXY(15, 31);
+	$pdf->Cell(60,10,"Miejsce wystawienia: $dokks[miejsce_wyst]",0,0,'C');
+	$pdf->Cell(60,10,"Data wystawienia: $dokks[data_wyst]",0,0,'C');
+	$pdf->Cell(60,10,"Data sprzedaży: $dokks[data_sprzed]",0,1,'C');
+	// Sprzedawca
+	$pdf->SetXY(15,40);
+	$pdf->Cell(90,40,'',1,0,'C');
+	$pdf->Text(17,45,'Sprzedawca:');
+	$pdf->Text(60,45,"NIP: $firma[nip]");
+	$pdf->Text(20,55,$firma[nazwa]);
+        $pdf->Text(20,59,$firma[nazwa2]);
+	$pdf->Text(20,63,$firma[adres]);
+	$pdf->SetFont('Tahoma','',8);
+	$pdf->Text(20,70,"Bank:   $firma[bank]");
+	$pdf->Text(20,74,"Konto:  $firma[konto]");
+	$pdf->SetFont('Tahoma','',10);
+	// Nabywca
+	$pdf->SetXY(106,40);
+	$pdf->Cell(90,40,'',1,1,'C');
+	$pdf->Text(108,45,'Nabywca:');
+	if ( !empty($dokks[pesel_nip]) && strlen($dokks[pesel_nip])!=11)
+		$pdf->Text(155,45,"NIP: $dokks[pesel_nip]");
+	$pdf->SetXY(111,55);
+	$pdf->MultiCell(70,3,"$dokks[nazwa]",0,L,0);
+	$adres=$dokks[kod]." ".$dokks[miasto].", ul. ".$dokks[ulica]." ".$dokks[nr_bud];
+	if (!empty($dokks[nr_mieszk]))
+		$adres.="/$dokks[nr_mieszk]";
+	$pdf->Text(112,64,$adres);
+	$pdf->SetXY(20,80);
+	$pdf->Cell(90,10,"Termin płatności:  $dokks[term_plat]",0,0,'C');
+	$pdf->Cell(90,10,"Forma płatności:  $dokks[forma_plat]",0,1,'C');
+	$pdf->SetFont('Tahoma','',8);
+	$pdf->Cell(6,15,'L.p.',1,0,'C');
+	$pdf->Cell(60,15,'Pełna nazwa towaru / uslugi',1,0,'C');
+	$pdf->Cell(15,15,'PKWiU',1,0,'C');
+	$pdf->Cell(10,15,'Ilość',1,0,'C');
+	$pdf->Cell(10,15,'j.m.',1,0,'C');
+	$pdf->Cell(15,15,'',1,0,'C'); //Cena jedn. netto
+	$pdf->Cell(20,15,'Netto',1,0,'C'); // Netto
+	$pdf->Cell(10,15,'',1,0,'C');	// % VAT
+	$pdf->Cell(15,15,'Kwota VAT',1,0,'C');
+	$pdf->Cell(20,15,'Brutto',1,0,'C');
+	$pdf->Text(117,96, '   Cena');
+	$pdf->Text(117,100,'jedn. netto');
+	$pdf->Text(154, 96,' % ');
+	$pdf->Text(154,100,'VAT');
+
+	$q2="	select t.nazwa, t.pkwiu, p.ilosc, t.jm, t.cena, t.vat
+			from pozycje_sprzedaz p, towary_sprzedaz t
+			where p.id_tows=t.id_tows and p.nr_ds='$dokks[nr_d]' order by t.nazwa";
+	$razem_netto=$razem_vato=$razem_brutoo=0;
+	$Lp=0;
+	$sth1=Query($dbh,$q2);
+	while ( $row1=$sth1->fetchRow() )
+	{
+		++$Lp;
+		$pdf->Ln();
+		$pdf->Cell(6,7,"$Lp.",1,0,'C');
+		$pdf->Cell(60,7, $row1[0],1,0,'L');
+		$pdf->Cell(15,7, $row1[1],1,0,'C');
+		$pdf->Cell(10,7, $row1[2],1,0,'C');
+		$pdf->Cell(10,7, $row1[3],1,0,'C');
+		$cena_jedn_netto=round($row1[4],2);
+		$pdf->Cell(15,7, number_format($cena_jedn_netto, 2, ',',''),1,0,'R'); //Cena jedn. netto
+		$netto=$row1[2]* $row1[4];
+		$pdf->Cell(20,7, number_format(round($netto,2), 2, ',','') ,1,0,'R'); // Netto
+		$pdf->Cell(10,7, $row1[5],1,0,'C');	// % VAT
+		$kwota_vat=($row1[5]/100 * $netto);
+		$pdf->Cell(15,7,number_format(round($kwota_vat,2), 2,',',''),1,0,'R');
+		$brutto=$netto+$kwota_vat;
+		$pdf->Cell( 20, 7, number_format(round($brutto ,2), 2, ',',''), 1, 0, 'R' );
+		$razem_netto+=$netto;
+		$razem_vat+=$kwota_vat;
+		$razem_brutto+=$brutto;
+	}
+	$pdf->Ln();
+	$pdf->SetFont('Tahoma','',10);
+	$pdf->Cell(116,15,'Razem zł:',1,0,'C');
+	$r_razem_netto=round($razem_netto, 2);
+	$r_razem_vat=round($razem_vat, 2);
+	$r_razem_brutto=round($razem_brutto, 2);
+	$pdf->Cell(20,15,number_format($r_razem_netto, 2, ',',''),1,0,'R'); // Netto
+	$pdf->Cell(10,15,'',1,0,'C');	// % VAT
+	$pdf->Cell(15,15,number_format($r_razem_vat, 2,',',''),1,0,'R');
+	$pdf->SetFont('Tahoma','B',10);
+
+	$pdf->Cell(20,15,number_format($r_razem_brutto, 2,',',''),1,1,'R');
+	$pdf->SetFont('Tahoma','',8);
+
+	$x=new slownie;
+	$slownie=$x->zwroc($razem_brutto);
+	$pdf->Cell(40,6,'Słownie :',1,0,'C');
+	$pdf->Cell(141,6,$slownie,1,1,'C');
+
+	$pdf->Cell(60,30,'',0,0,'C');
+	$pdf->Cell(60,30,'',0,0,'C');
+	$pdf->Cell(60,30,"Fakturę wystawił :   $dokks[wystawil]",0,0,'C');
+}
+
+function poj($pdf, $ks, $mies, $y=0)
+{
+include "config.php";
+
+	$x=new slownie;
+	$slownie=$x->zwroc($ks[kwota]);
+
+	$cw=130;
+	$ch=5;
+	$X1=6;
+	$X2=70;
+
+	$pdf->SetFont('Tahoma','',8);
+	$pdf->SetXY($X1, 87+$y);
+	$pdf->Cell(40,7,$firma[konto],0,0,'C');
+	
+	$pdf->Text($X1,111+$y,"$firma[nazwa]");
+	$pdf->Text($X1,116+$y,"$firma[adres]");
+
+
+	$pdf->Text($X1,127+$y,"$ks[kwota]");
+	$pdf->Text($X1,148+$y,"$ks[nazwa]");
+	$pdf->Text($X1,153+$y,"$ks[ulica]");
+	$pdf->Text($X1,158+$y,"$ks[miasto]");
+
+	$pdf->SetFont('Tahoma','',12);
+	$pdf->SetXY($X2, 88+$y);
+	$pdf->Cell($cw,$ch,$firma[nazwa],0,0,'L');
+	$pdf->SetXY($X2, 97+$y);
+	$pdf->Cell($cw,$ch,$firma[adres],0,0,'L');
+	$pdf->SetXY($X2, 106+$y);
+	$pdf->Cell($cw,$ch,$firma[konto],0,0,'L');
+
+
+	$pdf->SetXY(142, 114+$y);
+	$pdf->Cell(55,$ch,"$ks[kwota]",0,0,'R');
+	$pdf->SetXY($X2, 124+$y);
+	$pdf->Cell($cw,$ch,"$slownie",0,0,'L');
+	$pdf->SetXY($X2, 133+$y);
+	$pdf->Cell($cw,$ch,"$ks[nazwa]",0,0,'L');
+	$pdf->SetXY($X2, 142+$y);
+	$pdf->Cell($cw,$ch,"$ks[ulica], $ks[miasto]",0,0,'L');
+	$pdf->SetXY($X2, 151+$y);
+	$pdf->Cell($cw,$ch,"Abonament za dostęp do Internetu",0,0,'L');
+	$pdf->SetXY($X2, 159+$y);
+	$pdf->Cell($cw,$ch,"Miesiąc: $mies",0,0,'L');
+
+}
+
+function MakeKS(&$pdf, $dbh, $ks, $mies)
+{
+
+	$pdf->AddPage();
+	$pdf->SetMargins(0,0,0);
+	$pdf->SetFont('Tahoma','B',12);
+	$pdf->SetXY(15, 40);
+	$pdf->Text(18,45,"Sposoby uiszczania abonamentu:");
+	$pdf->SetFont('Tahoma','',12);
+	$pdf->Text(18,52,"- PKO BP ul. Wojska Polskiego 3 : brak prowizji");
+	$pdf->Text(18,57,"- Poczta Polska : prowizja 2,50 zł");
+
+	$pdf->Text(135,15,"$ks[nazwa]");
+	$pdf->Text(135,20,"$ks[ulica]");
+	$pdf->Text(135,25,"$ks[miasto]");
+
+	poj(&$pdf, $ks, $mies, 0);
+	poj(&$pdf, $ks, $mies, 112);
+}
+
+function Faktura(&$pdf, $dbh, $nr, $typ)
+{
+	$q="	select  d.nr_ds, d.data_wyst, d.data_sprzed, d.term_plat, d.forma_plat, d.miejsce_wyst, a.nazwa, 
+			a.pesel_nip, u.nazwa, b.numer, a.nr_mieszk, d.wystawil, u.miasto, u.kod
+			from dokumenty_sprzedaz d, abonenci a, budynki b, ulice u 
+			where d.id_odb=a.id_abon and a.id_bud=b.id_bud and u.id_ul=b.id_ul and d.nr_ds='$nr'";
+
+	$sth=Query($dbh,$q);
+	$row=$sth->fetchRow();
+	$dokks=array
+		(
+			'nr_d'			=> $nr, 			'data_wyst'		=> $row[1],	'data_sprzed'	=> $row[2], 'term_plat'		=>	$row[3],	
+			'forma_plat'	=> $row[4],		'miejsce_wyst'	=> $row[5],	'nazwa'			=> $row[6],	'pesel_nip'		=> $row[7],
+			'ulica'			=> $row[8],		'nr_bud'			=> $row[9],	'nr_mieszk'		=> $row[10],'wystawil'		=> $row[11],
+			'miasto'			=> $row[12],	'kod'				=> $row[13]
+		);
+	MakeFV($pdf, $dbh, $dokks, $typ);
+	$pdf->Output();
+}
+
+function Faktury(&$pdf, $dbh, $od, $do, $TYP)
+{
+$q="	select  d.nr_ds, d.data_wyst, d.data_sprzed, d.term_plat, d.forma_plat, d.miejsce_wyst, a.nazwa, 
+		a.pesel_nip, u.nazwa, b.numer, a.nr_mieszk, d.wystawil, u.miasto, u.kod
+		from dokumenty_sprzedaz d, abonenci a, budynki b, ulice u 
+		where d.id_odb=a.id_abon and a.id_bud=b.id_bud and u.id_ul=b.id_ul and d.data_wyst >= '$od' and d.data_wyst <= '$do'
+		order by d.data_wyst, d.nr_ds";
+
+	$sth=Query($dbh,$q);
+	while ($row=$sth->fetchRow() )
+		{
+			$dokks=array
+			(
+				'nr_d'			=> $row[0], 	'data_wyst'		=> $row[1],	'data_sprzed'	=> $row[2], 'term_plat'		=>	$row[3],	
+				'forma_plat'	=> $row[4],		'miejsce_wyst'	=> $row[5],	'nazwa'			=> $row[6],	'pesel_nip'		=> $row[7],
+				'ulica'			=> $row[8],		'nr_bud'			=> $row[9],	'nr_mieszk'		=> $row[10],'wystawil'		=> $row[11],
+				'miasto'			=> $row[12],	'kod'				=> $row[13]
+			);
+		MakeFV($pdf, $dbh, $dokks, $TYP);
+	//	MakeFV($pdf, $dbh, $dokks, "KOPIA");
+		}
+	return($pdf);
+	//$pdf->Output();
+}
+
+function RejSprzedazy(&$pdf, $dbh, $od, $do)
+{
+$q="	select  d.nr_ds, d.data_wyst, d.data_sprzed, d.term_plat, d.forma_plat, d.miejsce_wyst, a.nazwa, 
+		a.pesel_nip, u.nazwa, b.numer, a.nr_mieszk, d.wystawil, u.miasto, u.kod
+		from dokumenty_sprzedaz d, abonenci a, budynki b, ulice u 
+		where d.id_odb=a.id_abon and a.id_bud=b.id_bud and u.id_ul=b.id_ul and d.data_wyst >= '$od' and d.data_wyst <= '$do'
+		order by d.data_wyst, d.nr_ds";
+
+	$pdf->AddPage(L);
+
+	$ML=15;
+
+	$pdf->SetMargins($ML,15,15);
+
+	$pdf->SetFont('Tahoma','B',10);
+	$pdf->SetXY(110, 12);
+	$pdf->Cell(170,10,'NETICO Systemy Informatyczne mgr inż. Mirosław Borodziuk, ul. Morcinka 2, 41-400 Mysłowice',0,1,'C');
+
+	$W=12;
+	$pdf->SetXY($ML, 40);
+	$pdf->SetFont('Tahoma','',8);
+
+	$LP_W=10;
+	$NRD_W=20;
+	$MW_W=20;
+	$DW_W=25;
+	$TP_W=25;
+	$N_W=85;
+	$WSN_W=30;
+	$WSN_B=30;
+	$PV_W=20;
+
+	$pdf->Cell($LP_W,  $W,'Lp',1,0,'C');
+	$pdf->Cell($NRD_W, $W,'Nr dokumentu',1,0,'C');
+	$pdf->Cell($MW_W,  $W, '',1,0,'C');
+	$pdf->Cell($DW_W,  $W,'',1,0,'C');
+	$pdf->Cell($TP_W,  $W,'Termin płatnośći',1,0,'C');
+	$pdf->Cell($N_W,   $W,'Nabywca',1,0,'C');
+	$pdf->Cell($WSN_W, $W,'',1,0,'C');
+	$pdf->Cell($PV_W,  $W,'Podatek VAT',1,0,'C');
+	$pdf->Cell($WSB_B, $W,'',1,0,'C');
+
+
+	$y=45;
+	$pdf->SetXY($ML+$LP_W+$NRD_W, $y);
+	$pdf->MultiCell(20,3,'Miejsce wystawienia',0,C,0);
+	$pdf->SetXY($ML+$LP_W+$NRD_W+$MW_W, $y);
+	$pdf->MultiCell($DW_W,3,'Data wystawienia Data sprzedazy',0,C,0);
+	$pdf->SetXY($ML+$LP_W+$NRD_W+$MW_W+$DW_W+$TP_W+$N_W, $y);
+	$pdf->MultiCell($WSN_W,3,'Wartość sprzedaży netto',0,C,0);
+	$pdf->SetXY($ML+$LP_W+$NRD_W+$MW_W+$DW_W+$TP_W+$N_W+$WSN_W, $y);
+	$pdf->MultiCell($WSN_B,3,'Wartość sprzedaży brutto',0,C,0);
+
+
+	$lp=1;
+	$sth=Query($dbh,$q);
+	while ($row=$sth->fetchRow() )
+	{
+			$dokks=array
+			(
+				'nr_d'			=> $row[0], 	'data_wyst'		=> $row[1],	'data_sprzed'	=> $row[2], 'term_plat'		=>	$row[3],	
+				'forma_plat'	=> $row[4],		'miejsce_wyst'	=> $row[5],	'nazwa'			=> $row[6],	'pesel_nip'		=> $row[7],
+				'ulica'			=> $row[8],		'nr_bud'			=> $row[9],	'nr_mieszk'		=> $row[10],'wystawil'		=> $row[11],
+				'miasto'			=> $row[12],	'kod'				=> $row[13]
+			);
+
+
+		$q2="	select t.nazwa, t.pkwiu, p.ilosc, t.jm, t.cena, t.vat
+				from pozycje_sprzedaz p, towary_sprzedaz t
+				where p.id_tows=t.id_tows and p.nr_ds='$dokks[nr_d]' order by t.nazwa";
+
+		$razem_netto=$razem_vat=$razem_brutto=0;
+		$sth1=Query($dbh,$q2);
+		while ( $row1=$sth1->fetchRow() )
+			{
+				$cena_jedn_netto=round($row1[4],2);
+				$netto=$row1[2]* $row1[4];
+				$kwota_vat=($row1[5]/100 * $netto);
+				$brutto=$netto+$kwota_vat;
+				$razem_netto+=$netto;
+				$razem_vat+=$kwota_vat;
+				$razem_brutto+=$brutto;
+			}
+		$r_razem_netto=round($razem_netto, 2);
+		$r_razem_vat=round($razem_vat, 2);
+		$r_razem_brutto=round($razem_brutto, 2);
+
+		$pdf->Ln();
+		$pdf->SetFont('Tahoma','',8);
+
+		$Y=42+$lp*$W;
+		$pdf->SetXY($ML, $Y);
+		$pdf->Cell($LP_W,$W, "$lp", 1,0,'C');
+		$pdf->Cell($NRD_W,$W, "$dokks[nr_d]", 1,0,'C');
+		$pdf->Cell($MW_W,$W, "$dokks[miejsce_wyst]", 1,0,'C');
+		$pdf->Cell($DW_W,$W, '',1,0,'C');
+		$pdf->Cell($TP_W,$W, "$dokks[term_plat]",1,0,'C');
+		$pdf->Cell($N_W,$W, '',1,0,'C');
+		$pdf->Cell($WSN_W,$W, number_format($r_razem_netto, 2, ',',''),1,0,'C');
+		$pdf->Cell($PV_W,$W,  number_format($r_razem_vat, 2,',',''),   1,0,'C');
+		$pdf->Cell($WSB_B,$W, number_format($r_razem_brutto, 2,',',''),1,0,'C');
+
+		$y=$Y+3;
+		$pdf->SetXY($ML+$LP_W+$NRD_W+$MW_W, $y);
+		$pdf->MultiCell($DW_W,3,"$dokks[data_wyst] $dokks[data_sprzed]" ,0,C,0);
+
+		$pdf->Text($ML+$LP_W+$NRD_W+$MW_W+$DW_W+$TP_W+5,$y+2,"$dokks[nazwa]");
+		$adres=$dokks[kod]." ".$dokks[miasto].", ul. ".$dokks[ulica]." ".$dokks[nr_bud];
+		if (!empty($dokks[nr_mieszk]))
+		$adres.="/$dokks[nr_mieszk]";
+		$pdf->Text($ML+$LP_W+$NRD_W+$MW_W+$DW_W+$TP_W+5,$y+5,$adres);
+		if ( !empty($dokks[pesel_nip]) && strlen($dokks[pesel_nip])!=11)
+		$pdf->Text($ML+$LP_W+$NRD_W+$MW_W+$DW_W+$TP_W+5,$y+8,"NIP: $dokks[pesel_nip]");
+
+	++$lp;
+	if ( $lp%10 == 1)
+		{
+			$pdf->AddPage(L);	
+			$pdf->SetXY($ML, 40);
+		}
+
+	}
+
+
+/*
+	$pdf->Text(60,45,"NIP: $firma[nip]");
+	$pdf->Text(20,55,$firma[nazwa]);
+        $pdf->Text(20,59,$firma[nazwa2]);
+	$pdf->Text(20,63,$firma[adres]);
+
+	$pdf->SetFont('Tahoma','',8);
+
+	$x=new slownie;
+	$slownie=$x->zwroc($razem_brutto);
+	$pdf->Cell(40,6,'Słownie :',1,0,'C');
+	$pdf->Cell(141,6,$slownie,1,1,'C');
+
+	$pdf->Cell(60,30,'',0,0,'C');
+	$pdf->Cell(60,30,'',0,0,'C');
+	$pdf->Cell(60,30,"Fakturę wystawił :   $dokks[wystawil]",0,0,'C');
+}
+*/
+	
+//	return($pdf);
+	$pdf->Output();
+}
+function Ksiazeczki(&$pdf, $dbh, $data_od, $data_do)
+{
+	$od_data=explode("-", $data_od);
+	$rok=$od_data[0];
+	$do_data=explode("-", $data_do);
+	$m_od=$od_data[1];
+	$m_do=$do_data[1];
+
+	$q="	select distinct a.id_abon, a.symbol, a.nazwa, u.kod, u.miasto, u.nazwa, b.numer, a.nr_mieszk, um.platnosc, um.il_komp, t.vat, t.cena
+			from abonenci a, ulice u, budynki b, umowy_abonenckie um, komputery k, towary_sprzedaz t
+			where u.id_ul=b.id_ul and a.id_bud=b.id_bud and um.id_abon=a.id_abon and k.id_abon=a.id_abon and k.id_taryfy=t.id_tows 
+			and um.status='Obowiązująca' and um.ksiazeczka='T'
+			order by u.nazwa, b.numer, a.nr_mieszk";
+
+	$sth=Query($dbh,$q);
+	while ($row=$sth->fetchRow() )
+		{
+			if ($row[9]==1)
+				$kwota=number_format(round(($row[10]/100+1)*$row[11], 2), 2, ',','');
+			else
+				$kwota="65.00";
+
+			$ks=array( 	'nazwa'	=> Choose($row[1], $row[2]),	'term_plat'		=>	$row[3], 'kwota' => $kwota,	
+							'miasto'	=> "$row[3]"." "."$row[4]", 'ulica' => "ul. "."$row[5]"." "."$row[6]");
+
+			if (!empty($row[7]))		
+				$ks[ulica].="/$row[7]";
+
+			for ( $i=$m_od; $i<=$m_do; ++$i)
+			{
+				$mies="$i.$rok";
+				MakeKS($pdf, $dbh, $ks, $mies);
+			}
+		}
+	$pdf->Output();
+}
+
+include "config.php";
+include "../func/szmsk.php";
+include "slownie.php";
+require('fpdf.php');
+
+class PDF extends FPDF
+{
+	//Page header
+	function Header()
+	{
+		//Logo
+		$this->Image('/home/szmsk/public_html/pfin/data/FakturaLogo.jpg',15,10,80);
+	}
+}
+
+$dbh=DBConnect($DBNAME1);
+
+$pdf=new PDF();
+$pdf->AliasNbPages();
+$pdf->AddFont('Tahoma','','tahoma.php');
+$pdf->AddFont('Tahoma','B','tahomabd.php');
+
+switch ($_GET[dok])
+	{
+	case fv:
+		Faktura($pdf, $dbh, $_GET[nr], $_GET[typ]);
+		break;
+	case fyv:
+		$pdf=Faktury($pdf, $dbh, $_GET[data_od], $_GET[data_do], "KOPIA");
+		Faktury($pdf, $dbh, $_GET[data_od], $_GET[data_do], "ORYGINAŁ");
+		$pdf->Output();
+		break;
+	case ks:
+		Ksiazeczki($pdf, $dbh, $_GET[data_od], $_GET[data_do]);
+		break;
+	case rsp:
+		RejSprzedazy($pdf, $dbh, $_GET[data_od], $_GET[data_do]);
+		break;
+}
+?>

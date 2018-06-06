@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<!-- saved from url http://www.bootstraptor.com ##########################################################################
+Don't remove this attribution!
+This template build on Bootstrap 3 Developer  Kit v.3.0. by @Bootstraptor
+Built with Bootstrap 3.0.* version/ part of Bootstraptor KIT
+Read usage license on for this template on http://www.bootstraptor.com 
+##########################################################################
+-->
+<html lang="en">
+	<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>Base page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+<!-- GOOGLE FONT-->
+<link href='http://fonts.googleapis.com/css?family=Roboto:400,300,700italic,700,500&amp;subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+<!-- /GOOGLE FONT-->
+
+
+<!-- Le styles -->
+<!-- Latest compiled and minified CSS BS 3.0. -->
+<!--<link href="assets/css/bootstrap.css" rel="stylesheet">-->
+<!-- custom BS3 theme 
+<link href="assets/css/bootstrap-theme-blue.css" rel="stylesheet">
+<link href="assets/css/bootstrap-theme-robotron.css" rel="stylesheet">
+<link href="assets/css/bootstrap-theme-full-width.css" rel="stylesheet">-->
+<link href="assets/css/bootstrap-theme-flatty.css" rel="stylesheet">
+<link href="assets/css/custom.css" rel="stylesheet">
+
+
+<link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.min.css" rel="stylesheet">
+
+<!--[if lt IE 7]>
+	<link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome-ie7.min.css" rel="stylesheet">
+	<![endif]-->
+    <!-- Fav and touch icons -->
+
+
+<!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+<!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+<!-- Le fav and touch icons -->
+<link rel="shortcut icon" href="assets/ico/favicon.ico">
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="assets/ico/apple-touch-icon-144-precomposed.png">
+<link rel="apple-touch-icon-precomposed" sizes="114x114" href="assets/ico/apple-touch-icon-114-precomposed.png">
+<link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/ico/apple-touch-icon-72-precomposed.png">
+<link rel="apple-touch-icon-precomposed" href="assets/ico/apple-touch-icon-57-precomposed.png">
+
+  <body>
+<div class="wrap">
+	<section>
+		<nav class="navbar-default navbar-inverse navbar-fixed-top" role="navigation">
+			<div class="navbar-header">
+				 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button>
+					<span class="pull-right visible-xs offbtn">
+						<button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas">Toggle nav</button>
+					</span>
+			</div>
+			
+			<div class="collapse navbar-collapse navbar-ex1-collapse">
+				<ul class="nav navbar-nav">
+                <li class="active"><a href="#"><span class="icon-home"></span> SimpleDashboard</a></li>
+                <li><a href="#"><span class="icon-calendar"></span> Calendar</a></li>
+                <li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="icon-list-alt"></span> Widgets <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="http://www.bootstraptor.com"> Action</a></li>
+                        <li><a href="http://www.bootstraptor.com"> Another action</a></li>
+                        <li><a href="#">Something else here</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#">Separated link</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#">One more separated link</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="icon-search"></span>Search <b class="caret"></b></a>
+                    <ul class="dropdown-menu" style="min-width: 310px;">
+                        <li>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <form class="navbar-form navbar-left" role="search">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" placeholder="Search">
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-primary" type="button">
+                                                Go!</button>
+                                        </span>
+                                    </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+				
+				<ul class="nav navbar-nav navbar-right">
+                <li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="icon-comment"></span> Chats <span class="label label-primary">42</span>
+                </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#"><span class="label label-primary">9:00 AM</span> First message</a></li>
+                        <li><a href="#"><span class="label label-primary">10:00 AM</span> Second message</a></li>
+                        <li><a href="#"><span class="label label-primary">11:00 AM</span> Fird message</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#" class="text-center">View All</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="icon-envelope"></span> Inbox <span class="label label-info">32</span>
+                </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#"><span class="label label-primary">4:00 AM</span> Message title</a></li>
+                        <li><a href="#"><span class="label label-primary">4:30 AM</span> Message title</a></li>
+                        <li><a href="#"><span class="label label-primary">5:00 AM</span> Long message title test</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#" class="text-center">View All</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="icon-user"></span> Admin <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#"><span class="icon-user"></span> Profile</a></li>
+                        <li><a href="#"><span class="icon-cog"></span> Settings</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#"><span class="icon-off"></span> Logout</a></li>
+                    </ul>
+                </li>
+            </ul>
+			</div>
+			
+		</nav>
+	</section>
+	<section>
+		<div class="container">
+					
+			<div class="row row row-offcanvas row-offcanvas-left">
+					
+				<div  id="sidebar" role="navigation" class="col-xs-4 col-sm-4 col-md-4 col-lg-3 sidebar-offcanvas">
+					<div class="panel-group" id="accordion-829268">
+						<div class="panel panel-default">
+							<div class="panel-heading">
+								<h4 class="panel-title">
+									 <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion-829268" href="#accordion-element-429150">Group Item #1</a>
+								</h4>
+							</div>
+							<div id="accordion-element-429150" class="panel-collapse in">
+								<div class="list-group">
+									 <a href="#" class="list-group-item">Dapibus ac facilisis in</a> <a href="#" class="list-group-item">Morbi leo risus</a> <a href="#" class="list-group-item">Porta ac consectetur ac</a> <a href="#" class="list-group-item">Vestibulum at eros</a>
+								</div>
+							</div>
+						</div>
+						<div class="panel panel-default">
+							<div class="panel-heading">
+								<h4 class="panel-title">
+									 <a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion-829268" href="#accordion-element-274747">Group Item #2</a>
+								</h4>
+							</div>
+							<div id="accordion-element-274747" class="panel-collapse collapse">
+								<div class="list-group">
+									 <a href="#" class="list-group-item">Dapibus ac facilisis in</a> <a href="#" class="list-group-item">Morbi leo risus</a> <a href="#" class="list-group-item">Porta ac consectetur ac</a> <a href="#" class="list-group-item">Vestibulum at eros</a>
+								</div>
+							</div>
+						</div>
+						<div class="panel panel-default">
+							<div class="panel-heading">
+								<h4 class="panel-title">
+									 <a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion-829268" href="#accordion-element-674935">Group Item #3</a>
+								</h4>
+							</div>
+							<div id="accordion-element-674935" class="panel-collapse collapse">
+								<div class="list-group">
+									 <a href="#" class="list-group-item">Dapibus ac facilisis in</a> <a href="#" class="list-group-item">Morbi leo risus</a> <a href="#" class="list-group-item">Porta ac consectetur ac</a> <a href="#" class="list-group-item">Vestibulum at eros</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-xs-12 col-sm-8 col-md-8 col-lg-9">
+					
+					<div class="row">
+					<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+					  <div class="alert alert-warning">
+						<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+						<strong>Holy guacamole!</strong> Best check yo self, you're not looking too good.
+					</div>
+				</div>
+						<div class="col-xs-6 col-sm-3 col-md-3 col-lg-3">
+							<div class="panel panel-default text-center">
+								<div class="panel-body">
+									<i class="icon-group icon-4x text-info"></i>
+									<h4>
+										<a href="#userstab" data-toggle="tab">USERS</a>
+									</h4>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6 col-sm-3 col-md-3 col-lg-3">
+							<div class="panel panel-default text-center">
+								<div class="panel-body">
+									<i class="icon-money icon-4x text-info"></i>
+									<h4>
+										<a href="#orderstab" data-toggle="tab">ORDERS</a>
+									</h4>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6 col-sm-3 col-md-3 col-lg-3">
+							<div class="panel panel-default text-center">
+								<div class="panel-body">
+									<i class="icon-comments icon-4x text-info"></i>
+									<h4>
+										<a href="#commentstab" data-toggle="tab">COMMENTS</a>
+									</h4>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-6 col-sm-3 col-md-3 col-lg-3">
+							<div class="panel panel-default text-center">
+								<div class="panel-body">
+									<i class="icon-question icon-4x text-info"></i>
+									<h4>
+										<a href="#supporttab" data-toggle="tab">SUPPORT</a>
+									</h4>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+					<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+					 <div class="tab-content">
+						<div id="userstab" class="panel panel-default tab-pane fade in active">
+							<div class="panel-body">
+							<table class="table table-responsive table-striped">
+								<thead>
+									<tr>
+										<th>
+											#
+										</th>
+										<th>
+											First Name
+										</th>
+										<th>
+											Last Name
+										</th>
+										<th>
+											Username
+										</th>
+										<th>
+											Action
+										</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td>
+											1
+										</td>
+										<td>
+											Mark
+										</td>
+										<td>
+											Otto
+										</td>
+										<td>
+											@mdo
+										</td>
+										<td>
+											<div class="btn-group">
+												 <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Action</button> <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><i class="icon-user"></i></button>
+												<ul class="dropdown-menu" role="menu">
+													<li>
+														<a href="#">Action</a>
+													</li>
+													<li>
+														<a href="#">Another action</a>
+													</li>
+													<li>
+														<a href="#">Something else here</a>
+													</li>
+													<li class="divider">
+													</li>
+													<li>
+														<a href="#">Separated link</a>
+													</li>
+												</ul>
+											</div>
+										</td>
+									</tr>
+									<tr>
+										<td>
+											2
+										</td>
+										<td>
+											Jacob
+										</td>
+										<td>
+											Thornton
+										</td>
+										<td>
+											@fat
+										</td>
+										<td>
+											<div class="btn-group">
+												 <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Action</button> <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><i class="icon-user"></i></button>
+												<ul class="dropdown-menu" role="menu">
+													<li>
+														<a href="#">Action</a>
+													</li>
+													<li>
+														<a href="#">Another action</a>
+													</li>
+													<li>
+														<a href="#">Something else here</a>
+													</li>
+													<li class="divider">
+													</li>
+													<li>
+														<a href="#">Separated link</a>
+													</li>
+												</ul>
+											</div>
+										</td>
+									</tr>
+									<tr>
+										<td>
+											3
+										</td>
+										<td>
+											Larry
+										</td>
+										<td>
+											the Bird
+										</td>
+										<td>
+											@twitter
+										</td>
+										<td>
+											<div class="btn-group">
+												 <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Action</button> <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><i class="icon-user"></i></button>
+												<ul class="dropdown-menu" role="menu">
+													<li>
+														<a href="#">Action</a>
+													</li>
+													<li>
+														<a href="#">Another action</a>
+													</li>
+													<li>
+														<a href="#">Something else here</a>
+													</li>
+													<li class="divider">
+													</li>
+													<li>
+														<a href="#">Separated link</a>
+													</li>
+												</ul>
+											</div>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+							</div>
+						</div>
+						<div id="orderstab" class="panel panel-default tab-pane fade">
+							<div class="panel-body">
+								<table class="table table-striped">
+								<thead>
+								  <tr>
+									<th>Item</th>
+									<th>Qty</th>
+									<th>Price</th>
+									<th>Total</th>
+								  </tr>
+								</thead>
+								<tbody>
+								  <tr>
+									<td>TWBS232</td>
+									<td>1</td>
+									<td>$10</td>
+									<td>$10</td>
+								  </tr>
+								  <tr>
+									<td>TWBS30</td>
+									<td>1</td>
+									<td>$25</td>
+									<td>$25</td>
+								  </tr>
+								</tbody>
+						  </table>							
+						</div>
+						</div>
+						
+						<div id="commentstab" class="panel panel-default tab-pane fade">
+							<div class="panel-body">
+
+						<ul class="media-list">
+							<li class="media">
+							  <a class="pull-left" href="#">
+								<img class="media-object" src="images/mediathumb.png" alt="media">
+							  </a>
+							  <div class="media-body">
+								<h4 class="media-heading" contenteditable="true">Media heading</h4>
+								<p contenteditable="true">Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin commodo. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis.</p>
+								<!-- Nested media object -->
+								<div class="media">
+								  <a class="pull-left" href="#">
+									<img class="media-object" src="images/mediathumb.png" alt="media">
+								  </a>
+								  <div class="media-body" contenteditable="true">
+									<h4 class="media-heading">Nested media heading</h4>
+									Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin commodo. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis.
+									<!-- Nested media object -->
+									<div class="media">
+									  <a class="pull-left" href="#">
+										<img class="media-object" src="images/mediathumb.png" alt="media">
+									  </a>
+									  <div class="media-body" contenteditable="true">
+										<h4 class="media-heading">Nested media heading</h4>
+										Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin commodo. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis.
+									  </div>
+									</div>
+								  </div>
+								</div>
+								<!-- Nested media object -->
+								<div class="media">
+								  <a class="pull-left" href="#">
+									<img class="media-object" src="images/mediathumb.png" alt="media">
+								  </a>
+								  <div class="media-body" contenteditable="true">
+									<h4 class="media-heading">Nested media heading</h4>
+									Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin commodo. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis.
+								  </div>
+								</div>
+							  </div>
+							</li>
+						  </ul>
+						</div>
+						</div>
+						<div id="supporttab" class="panel panel-default tab-pane fade">
+							<div class="panel-body">
+								<form role="form" class="">
+								  <div class="form-group">
+								  <div class="row">
+								  <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+									<label for="exampleInputEmail1" contenteditable="true">Email address</label>
+									<input type="email" class="form-control" id="exampleInputEmail1" placeholder="Enter email">
+								  
+								  <div class="form-group">
+									<label for="exampleInputName1" contenteditable="true">Yourname</label>
+									<input type="password" class="form-control" id="exampleInputName1" placeholder="Name">
+								  </div>
+								  <div class="form-group">
+									<label for="exampleInputSelect" contenteditable="true">Subject</label>
+									<select class="form-control" id="subject" name="subject">
+										<option selected="" value="na">
+											Choose One:
+										</option>
+						
+										<option value="service">
+											General Customer Service
+										</option>
+						
+										<option value="suggestions">
+											Suggestions
+										</option>
+						
+										<option value="product">
+											Product Support
+										</option>
+									</select>
+									<p class="help-block" contenteditable="true">Example block-level help text here.</p>
+								  </div>
+								  <div class="checkbox">
+									<label contenteditable="true">
+									  <input type="checkbox"> Check me out
+									</label>
+								  </div>
+								  </div>
+								  <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+								  <label for="textMessage" contenteditable="true">Your message</label>
+									  <textarea id="textMessage" class="form-control" rows="10"></textarea>
+									  <hr>
+									  <button type="submit" class="btn btn-primary btn-md" contenteditable="true">Submit</button>
+								  </div>
+								  </div>
+							  </div>
+							  </form>
+							</div>
+						</div>
+					</div>
+					</div>
+					</div><!-- /. row-->
+				
+				
+			</div>
+		</div>
+	</section>
+</div>
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="assets/js/jquery.js" type="text/javascript"></script>
+<!-- Latest compiled and minified JavaScript -->
+<script src="assets/js/bootstrap.js"></script>
+<script src="assets/js/excanvas.min.js"></script>
+
+
+
+
+<script>
+/***************************************************
+responsive menu
+***************************************************/
+
+jQuery(function (jQuery) {
+    jQuery("#cat-navi").append("<select/>");
+	jQuery("#cat-navi select").addClass("form-control");
+    jQuery("<option />", {
+        "selected": "selected",
+        "value": "",
+        "text": "Choose category"
+    }).appendTo("#cat-navi select");
+    //new dropdown menu
+    jQuery("#cat-navi a").each(function () {
+        var el = jQuery(this);
+        var perfix = '';
+        switch (el.parents().length) {
+            case (11):
+                perfix = '-';
+                break;
+            case (13):
+                perfix = '--';
+                break;
+            default:
+                perfix = '';
+                break;
+
+        }
+        jQuery("<option />", {
+            "value": el.attr("href"),
+            "text": perfix + el.text()
+        }).appendTo("#cat-navi select");
+    });
+
+    jQuery('#cat-navi select').change(function () {
+
+        window.location.href = this.value;
+
+    });
+});
+
+</script>
+
+<script>
+/* offcanvas js */
+$(document).ready(function() {
+  $('[data-toggle=offcanvas]').click(function() {
+    $('.row-offcanvas').toggleClass('active');
+  });
+});
+</script>
+
+</body>
+</html>

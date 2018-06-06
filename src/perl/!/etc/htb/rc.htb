@@ -1,0 +1,32 @@
+#!/bin/bash
+source /etc/conf
+
+htb_start() {
+/etc/htb/htb.lan1
+/etc/htb/htb.lan2
+/etc/htb/htb.dsl1
+/etc/htb/htb.dsl2
+/etc/htb/htb.dsl3
+}
+
+htb_stop() {
+tc qdisc del root dev imq0
+tc qdisc del root dev $IF_LAN1
+tc qdisc del root dev $IF_LAN2
+tc qdisc del root dev $IF_INET1
+tc qdisc del root dev $IF_INET2
+tc qdisc del root dev $IF_INET3
+
+}
+
+case "$1" in
+'start')
+     htb_start
+     ;;
+'stop')
+     htb_stop
+     ;;
+*)
+     htb_start
+esac
+			

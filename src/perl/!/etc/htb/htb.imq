@@ -1,0 +1,23 @@
+#!/bin/bash
+IFLAN="eth0"
+LAN="10.0.0.0/16"
+IPLAN="10.0.100.100"
+IFDSL1="eth1"
+IPDSL1="83.16.19.42"
+IFDSL2="eth2"
+IPDSL2="83.16.112.34"
+TFADPPI_LAN="tc filter add dev $IFLAN parent 1:0 protocol ip prio 100 u32 match ip"
+TFADPPI_DSL1="tc filter add dev $IFDSL1 parent 2:0 protocol ip prio 100 u32 match ip"
+TFADPPI_DSL2="tc filter add dev $IFDSL2 parent 3:0 protocol ip prio 100 u32 match ip"
+TFADPPI_IMQ="tc filter add dev imq0 parent 4:0 protocol ip prio 100 u32 match ip"
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+tc qdisc del root dev imq0
+tc qdisc add dev imq0 root handle 4:0 htb default 2
+tc class add dev imq0 parent 4:0 classid 4:1 htb rate 100Mbit ceil 100Mbit
+
+#-------------------------------R u c h  z  s e r w e r a-----------------------------------#
+tc class add dev imq0 parent 4:1 classid 4:2 htb rate 2Mbit prio 2
+tc qdisc add dev imq0 parent 4:2 handle 42 sfq perturb 10
+$TFADPPI_IMQ dst $LAN flowid 4:2
+

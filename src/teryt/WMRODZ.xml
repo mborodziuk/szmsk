@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<teryt>
+<catalog name="SIMC" type="all" date="2013-02-28">
+<row>
+<col name="RM">01</col>
+<col name="NAZWA_RM">wieś                    </col>
+<col name="STAN_NA">2013-02-28</col>
+</row>
+<row>
+<col name="RM">02</col>
+<col name="NAZWA_RM">kolonia                 </col>
+<col name="STAN_NA">2013-02-28</col>
+</row>
+<row>
+<col name="RM">03</col>
+<col name="NAZWA_RM">przysiółek              </col>
+<col name="STAN_NA">2013-02-28</col>
+</row>
+<row>
+<col name="RM">04</col>
+<col name="NAZWA_RM">osada                   </col>
+<col name="STAN_NA">2013-02-28</col>
+</row>
+<row>
+<col name="RM">05</col>
+<col name="NAZWA_RM">osada leśna             </col>
+<col name="STAN_NA">2013-02-28</col>
+</row>
+<row>
+<col name="RM">06</col>
+<col name="NAZWA_RM">osiedle                 </col>
+<col name="STAN_NA">2013-02-28</col>
+</row>
+<row>
+<col name="RM">07</col>
+<col name="NAZWA_RM">schronisko turystyczne  </col>
+<col name="STAN_NA">2013-02-28</col>
+</row>
+<row>
+<col name="RM">95</col>
+<col name="NAZWA_RM">dzielnica m. st. Warszawy</col>
+<col name="STAN_NA">2013-02-28</col>
+</row>
+<row>
+<col name="RM">96</col>
+<col name="NAZWA_RM">miasto                  </col>
+<col name="STAN_NA">2013-02-28</col>
+</row>
+<row>
+<col name="RM">98</col>
+<col name="NAZWA_RM">delegatura              </col>
+<col name="STAN_NA">2013-02-28</col>
+</row>
+<row>
+<col name="RM">99</col>
+<col name="NAZWA_RM">część miasta            </col>
+<col name="STAN_NA">2013-02-28</col>
+</row>
+<row>
+<col name="RM">00</col>
+<col name="NAZWA_RM">część miejscowości</col>
+<col name="STAN_NA">2013-02-28</col>
+</row>
+</catalog>
+</teryt>

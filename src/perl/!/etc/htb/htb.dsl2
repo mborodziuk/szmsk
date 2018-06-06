@@ -1,0 +1,143 @@
+#!/bin/bash  
+source /etc/conf
+
+#############################################################################################
+###########################         Ruch z DSL1             #################################
+#############################################################################################
+tc qdisc del root dev $IF_INET2
+tc qdisc add dev $IF_INET2 root handle 6:0 htb default 8
+tc class add dev $IF_INET2 parent 6:0 classid 6:1 htb rate 320Kbit ceil 320Kbit
+
+#---------------------------------- Klasa priorytetowa ---------------------------------------
+tc class add dev $IF_INET2 parent 6:1 classid 6:2 htb rate 64Kbit ceil 128Kbit prio 1
+tc qdisc add dev $IF_INET2 parent 6:2 handle 62 sfq perturb 10
+$TFADPPI_INET2 dport 22 0xffff flowid 6:2 # SSH
+$TFADPPI_INET2 sport 22 0xffff flowid 6:2 # SSH
+$TFADPPI_INET2 dport 23 0xffff flowid 6:2 # telnet
+$TFADPPI_INET2 dport 53 0xffff flowid 6:2 # DNS
+$TFADPPI_INET2 protocol 1 0xff flowid 6:2 # ICMP
+$TFADPPI_INET2 tos 0x10 0xff flowid 6:2
+$TFADPPI_INET2	protocol 6 0xff match u8 0x05 0x0f at 0 \
+		match u16 0x0000 0xffc0 at 2 \
+		match u8 0x10 0xff at 33 flowid 6:2 #ACK
+
+#----------------------------------- G r y ---------------------------------------------------
+tc class add dev $IF_INET2 parent 6:0 classid 6:3 htb rate 128Kbit ceil 128Kbit prio 2
+tc qdisc add dev $IF_INET2 parent 6:3 handle 63 sfq perturb 10
+#################### cs #####################
+# porty UDP 1200, 27000:27015, TCP : 27030:27039
+$TFADPPI_INET2 dport 1200 0xffff flowid 6:3
+
+a=27000
+b=27015
+while [ "$a" -le $b ]
+  do
+    $TFADPPI_INET2 dport $a 0xffff flowid 6:3
+    let "a+=1"
+  done
+
+a=27030
+b=27039
+while [ "$a" -le $b ]
+  do
+    $TFADPPI_INET2 dport $a 0xffff flowid 6:3
+    let "a+=1"
+  done
+################ q3 ###########################
+a=27960
+b=27965
+while [ "$a" -le $b ]
+  do
+       $TFADPPI_INET2 dport $a 0xffff flowid 6:3
+        let "a+=1"
+  done
+
+# RPG
+$TFADPPI_LAN1 dport 15100 0xffff flowid 6:3
+$TFADPPI_LAN1 dport 15001 0xffff flowid 6:3
+$TFADPPI_LAN1 dport 15002 0xffff flowid 6:3
+
+# America's Army
+$TFADPPI_INET2 dport 1716 0xffff flowid 6:3
+$TFADPPI_INET2 dport 1717 0xffff flowid 6:3
+$TFADPPI_INET2 dport 1718 0xffff flowid 6:3
+$TFADPPI_INET2 dport 8777 0xffff flowid 6:3
+$TFADPPI_INET2 dport 27900 0xffff flowid 6:3
+$TFADPPI_INET2 dport 20045 0xffff flowid 6:3
+	      
+#-------------------------------  ftp  -------------------------------------------------
+tc class add dev $IF_INET2 parent 6:1 classid 6:4 htb rate 128Kbit ceil 192Kbit prio 3
+tc qdisc add dev $IF_INET2 parent 6:4 handle 64 sfq perturb 10
+$TFADPPI_INET2 dport 53 0xffff flowid 6:4   # dns
+$TFADPPI_INET2 dport 8074 0xffff flowid 6:4 # gg
+$TFADPPI_INET2 dport 443 0xffff flowid 6:4  # https
+$TFADPPI_INET2 dport 80 0xffff flowid 6:4
+$TFADPPI_INET2 dport 4569 0xffff flowid 6:4
+$TFADPPI_INET2 dport 119 0xffff flowid 6:4 # news
+$TFADPPI_INET2 dport 110 0xffff flowid 6:4 # pop3
+$TFADPPI_INET2 dport 113 0xffff flowid 6:4 # auth
+$TFADPPI_INET2 dport 8767 0xffff flowid 6:4 # ts
+$TFADPPI_INET2 dport 6667 0xffff flowid 6:4 # irc
+$TFADPPI_INET2 dport 520 0xffff flowid 6:4 # route
+$TFADPPI_INET2 dport 44405 0xffff flowid 6:4
+$TFADPPI_INET2 dport 7002 0xffff flowid 6:4
+$TFADPPI_INET3 dport 2082 0xffff flowid 6:4 # panel administracyjny www.superhost.pl
+$TFADPPI_INET3 dport 2083 0xffff flowid 6:4
+# ultima
+$TFADPPI_INET2 dport 5001 0xfff5 flowid 6:4
+$TFADPPI_INET2 dport 7775 0xfffd flowid 6:4
+$TFADPPI_INET2 dport 8888 0xffff flowid 6:4
+$TFADPPI_INET2 dport 8800 0xff99 flowid 6:4
+$TFADPPI_INET2 dport 9999 0xffff flowid 6:4
+$TFADPPI_INET2 dport 7875 0xffff flowid 6:4
+# free ultima
+$TFADPPI_INET2 dport 7171 0xffff flowid 6:4
+# radia internetowe
+$TFADPPI_INET2 dport 8000 0xffff flowid 6:4
+# czaty
+$TFADPPI_INET2 dport 14011 0xfffe flowid 6:4
+$TFADPPI_INET2 dport 5579 0xffff flowid 6:4
+$TFADPPI_INET2 dport 5581 0xffff flowid 6:4
+
+$TFADPPI_INET2 dport 5505 0xfff0 flowid 6:4
+$TFADPPI_INET2 dport 14003 0xffff flowid 6:4
+$TFADPPI_INET2 dport 10003 0xffff flowid 6:4
+# Dungeon Siege
+$TFADPPI_INET2 sport 2300 0xffff flowid 6:4
+$TFADPPI_INET2 sport 6073 0xffff flowid 6:4
+
+###### k u r n i k ########
+LIMIT=17050
+a=17000
+while [ "$a" -le $LIMIT ]
+ do
+   $TFADPPI_INET2 dport $a 0xffff flowid 6:4
+     let "a+=1"
+      done
+      
+#-------------------------------  ftp  -----------------------------------------------------
+tc class add dev $IF_INET2 parent 6:1 classid 6:5 htb rate 32Kbit ceil 128Kbit prio 3
+tc qdisc add dev $IF_INET2 parent 6:5 handle 65 sfq perturb 10
+$TFADPPI_INET2 dport 21 0xffff flowid 6:5
+$TFADPPI_INET2 dport 20 0xffff flowid 6:5
+    
+#----------------------------- www i ftp  -------------------------------------------------
+tc class add dev $IF_INET2 parent 6:1 classid 6:6 htb rate 32Kbit ceil 64Kbit prio 6
+tc qdisc add dev $IF_INET2 parent 6:6 handle 66 sfq perturb 10
+$TFADPPI_INET2 sport 80 0xffff flowid 6:6
+#$TFADPPI_INET2 sport 20 0xffff flowid 6:6
+#$TFADPPI_INET2 sport 21 0xffff flowid 6:6
+$TFADPPI_INET2 sport 113 0xffff flowid 6:6
+$TFADPPI_INET2 sport 110 0xffff flowid 6:6
+
+#-------------------------------  smtp  ----------------------------------------------------
+tc class add dev $IF_INET2 parent 6:1 classid 6:7 htb rate 32Kbit ceil 32Kbit prio 5
+tc qdisc add dev $IF_INET2 parent 6:7 handle 67 sfq perturb 10
+$TFADPPI_INET2 dport 25 0xffff flowid 6:7
+$TFADPPI_INET2 dport 7028 0xffff flowid 6:7
+
+#------------------------------- Reszta  ---------------------------------------------------
+tc class add dev $IF_INET2 parent 6:1 classid 6:8 htb rate 32Kbit ceil 32Kbit prio 8
+tc qdisc add dev $IF_INET2 parent 6:8 handle 68 sfq perturb 10
+$TFADPPI_INET2 dst 0.0.0.0/0 flowid 6:8
+#-------------------------------------------------------------------------------------------
