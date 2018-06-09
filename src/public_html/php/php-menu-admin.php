@@ -252,7 +252,7 @@ switch ( $_GET["menu"] )
 							$line->Delete($dbh);
 							$www->TablePrint($dbh, $line, $_POST);
 							break;
-/// Prze≥πcznice		
+/// Prze≈ÇƒÖcznice		
 					case "odf" :
 							$www->TablePrint($dbh, $odf, $_POST);
 							break;
@@ -393,7 +393,7 @@ switch ( $_GET["menu"] )
 							$trt->Delete($dbh);
 							$www->TablePrint($dbh, $trt, $_POST);
 							break;
-/// Po≥πczenie	
+/// Po≈ÇƒÖczenie	
 					case "plc" :
 							$www->TablePrint($dbh, $plc, $_POST);
 							break;
@@ -985,7 +985,7 @@ switch ( $_GET["menu"] )
 							include("report/wwwreport.php");
 							break;
 	
-// Wkaüniki
+// Wka≈∫niki
 					case "indicator" :
 							include("indicator/wwwindicator.php");
 							break;
